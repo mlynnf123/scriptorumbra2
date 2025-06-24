@@ -16,10 +16,12 @@ import {
   Sun,
   Copy,
   RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
+import { SetupInstructions } from "@/components/SetupInstructions";
 
 interface Message {
   id: string;
@@ -40,8 +42,12 @@ const Index = () => {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
+
+  // Check if API key is configured
+  const hasApiKey = !!import.meta.env.VITE_OPENAI_API_KEY;
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -169,6 +175,26 @@ const Index = () => {
     toast.success("Chat cleared");
   };
 
+  // Show setup instructions if no API key is configured or user explicitly requests it
+  if (!hasApiKey || showSetup) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/20">
+        {hasApiKey && (
+          <div className="fixed top-4 right-4 z-50">
+            <Button
+              variant="outline"
+              onClick={() => setShowSetup(false)}
+              className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm"
+            >
+              Back to Chat
+            </Button>
+          </div>
+        )}
+        <SetupInstructions />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/20">
       {/* Header */}
@@ -192,6 +218,12 @@ const Index = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {!hasApiKey && (
+              <Badge variant="destructive" className="mr-2">
+                <AlertCircle className="w-3 h-3 mr-1" />
+                Setup Required
+              </Badge>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -215,6 +247,7 @@ const Index = () => {
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setShowSetup(true)}
               className="text-slate-600 dark:text-slate-400"
             >
               <Settings className="w-4 h-4" />
@@ -363,8 +396,15 @@ const Index = () => {
               <span>{messages.filter((m) => !m.isTyping).length} messages</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span>Connected to OpenAI</span>
+              <div
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  hasApiKey ? "bg-green-500 animate-pulse" : "bg-red-500",
+                )}
+              />
+              <span>
+                {hasApiKey ? "Connected to OpenAI" : "OpenAI not configured"}
+              </span>
             </div>
           </div>
         </div>
