@@ -35,7 +35,8 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      content: "Hello! I'm Umbra, your AI assistant. How can I help you today?",
+      content:
+        "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
       role: "assistant",
       timestamp: new Date(),
     },
@@ -167,7 +168,7 @@ const Index = () => {
       {
         id: "1",
         content:
-          "Hello! I'm Umbra, your AI assistant. How can I help you today?",
+          "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
         role: "assistant",
         timestamp: new Date(),
       },
@@ -209,10 +210,10 @@ const Index = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-indigo-600 to-purple-600 dark:from-white dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
-                Umbra
+                Scriptor Umbra
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                AI Assistant
+                Ghostwriting Assistant
               </p>
             </div>
           </div>
