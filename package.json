@@ -7,7 +7,8 @@
     "build": "vite build",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "postinstall": "cd api && npm install"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -38,8 +39,8 @@
     "@radix-ui/react-toggle": "^1.1.0",
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.4",
-    "@react-three/drei": "^10.1.2",
     "@react-three/fiber": "^8.18.0",
+    "@react-three/drei": "^10.1.2",
     "@swc/core": "^1.11.24",
     "@tanstack/react-query": "^5.56.2",
     "@types/three": "^0.176.0",
@@ -52,7 +53,6 @@
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
-    "openai": "^5.7.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -65,7 +65,18 @@
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.176.0",
     "vaul": "^0.9.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "joi": "^17.11.0",
+    "express-rate-limit": "^7.1.5",
+    "openai": "^4.24.1",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
