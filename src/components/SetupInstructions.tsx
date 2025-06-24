@@ -192,153 +192,77 @@ export const SetupInstructions = () => {
             </CardContent>
           </Card>
 
-          {/* Step 1: Get OpenAI API Key */}
+          {/* Learn More About OpenAI */}
           <Card>
             <CardHeader>
-              <CardTitle>Step 1: Get Your OpenAI API Key</CardTitle>
+              <CardTitle>Learn More About OpenAI</CardTitle>
               <CardDescription>
-                Create an API key from your OpenAI dashboard
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ol className="list-decimal list-inside space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                <li>Go to the OpenAI platform</li>
-                <li>Sign in to your account or create one</li>
-                <li>Navigate to API Keys section</li>
-                <li>Create a new API key</li>
-                <li>Copy the key (it starts with "sk-")</li>
-              </ol>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  window.open("https://platform.openai.com/api-keys", "_blank")
-                }
-                className="w-full"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Open OpenAI Platform
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Step 2: Set Environment Variables */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Step 2: Configure Environment Variables</CardTitle>
-              <CardDescription>
-                Add your API key to the environment variables
+                Explore the platform behind Scriptor Umbra's AI capabilities
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-                    Create a .env file in your project root:
-                  </label>
-                  <div className="relative">
-                    <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded-lg text-sm overflow-x-auto">
-                      {`# OpenAI Configuration
-VITE_OPENAI_API_KEY=your_openai_api_key_here
-VITE_OPENAI_ASSISTANT_ID=your_assistant_id_here
-
-# Optional: Vercel Integration
-VITE_VERCEL_PROJECT_ID=your_vercel_project_id_here
-VITE_VERCEL_TOKEN=your_vercel_token_here`}
-                    </pre>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        copyToClipboard(
-                          `# OpenAI Configuration
-VITE_OPENAI_API_KEY=your_openai_api_key_here
-VITE_OPENAI_ASSISTANT_ID=your_assistant_id_here
-
-# Optional: Vercel Integration
-VITE_VERCEL_PROJECT_ID=your_vercel_project_id_here
-VITE_VERCEL_TOKEN=your_vercel_token_here`,
-                          "Environment template",
-                        )
-                      }
-                      className="absolute top-2 right-2"
-                    >
-                      {copied === "Environment template" ? (
-                        <CheckCircle className="w-4 h-4" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Scriptor Umbra is powered by OpenAI's GPT-4 model, providing state-of-the-art 
+                  natural language processing for all your ghostwriting needs.
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      window.open("https://platform.openai.com", "_blank")
+                    }
+                    className="w-full"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Visit OpenAI Platform
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      window.open("https://openai.com/gpt-4", "_blank")
+                    }
+                    className="w-full"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Learn About GPT-4
+                  </Button>
                 </div>
               </div>
-
-              <Alert>
-                <AlertCircle className="w-4 h-4" />
-                <AlertTitle>Important Security Note</AlertTitle>
-                <AlertDescription>
-                  Never commit your .env file to version control. Add it to your
-                  .gitignore file. In production, set these variables in your
-                  deployment platform (Vercel, Netlify, etc.).
-                </AlertDescription>
-              </Alert>
             </CardContent>
           </Card>
 
-          {/* Step 3: Optional Assistant Setup */}
+          {/* AI Model Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Step 3: Create OpenAI Assistant (Optional)</CardTitle>
+              <CardTitle>AI Model Information</CardTitle>
               <CardDescription>
-                For enhanced capabilities, create a custom assistant
+                Learn about the AI model powering Scriptor Umbra
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <ol className="list-decimal list-inside space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                <li>Go to the OpenAI Assistants playground</li>
-                <li>Create a new assistant with custom instructions</li>
-                <li>Copy the Assistant ID (starts with "asst_")</li>
-                <li>
-                  Add it to your VITE_OPENAI_ASSISTANT_ID environment variable
-                </li>
-              </ol>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  window.open("https://platform.openai.com/assistants", "_blank")
-                }
-                className="w-full"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Open Assistants Playground
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Step 4: Restart Development Server */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Step 4: Restart Your Development Server</CardTitle>
-              <CardDescription>
-                Restart to load the new environment variables
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="relative">
-                <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded-lg text-sm">
-                  npm run dev
-                </pre>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard("npm run dev", "Restart command")}
-                  className="absolute top-2 right-2"
-                >
-                  {copied === "Restart command" ? (
-                    <CheckCircle className="w-4 h-4" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </Button>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Current Model</h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">GPT-4 (OpenAI)</p>
+                  </div>
+                  <Badge variant="default" className="bg-gradient-to-r from-sky-500 to-blue-600">
+                    Active
+                  </Badge>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium text-slate-900 dark:text-slate-100">Capabilities</h4>
+                  <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                    <li>• Advanced content generation and editing</li>
+                    <li>• Multiple writing styles and tones</li>
+                    <li>• Long-form content creation</li>
+                    <li>• Research and fact-checking assistance</li>
+                    <li>• Creative writing and storytelling</li>
+                  </ul>
+                </div>
               </div>
             </CardContent>
           </Card>
