@@ -32,8 +32,7 @@ interface Message {
   id: string;
   content: string;
   role: "user" | "assistant";
-  timestamp: Date;
-  isTyping?: boolean;
+  created_at: string;
 }
 
 const Index = () => {
@@ -47,8 +46,9 @@ const Index = () => {
   const {
     currentSession,
     currentSessionId,
-    addMessageToSession,
+    sendMessage: sendChatMessage,
     createNewSession,
+    isLoading: chatLoading,
   } = useChatHistory();
 
   // Check if API key is configured
@@ -63,68 +63,16 @@ const Index = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading || !currentSessionId) return;
+    if (!inputValue.trim() || isLoading || chatLoading || !currentSessionId)
+      return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
-      role: "user",
-      timestamp: new Date(),
-    };
-
-    // Add user message to current session
-    addMessageToSession(currentSessionId, userMessage);
-    const currentInput = inputValue;
+    const messageContent = inputValue;
     setInputValue("");
     setIsLoading(true);
 
-    // Show typing indicator
-    const typingMessage: Message = {
-      id: "typing",
-      content: "",
-      role: "assistant",
-      timestamp: new Date(),
-      isTyping: true,
-    };
-    addMessageToSession(currentSessionId, typingMessage);
-
     try {
-      // Check if OpenAI API key is configured
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-
-      if (!apiKey) {
-        throw new Error(
-          "OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your environment variables.",
-        );
-      }
-
-      // Prepare messages for OpenAI (convert to their format)
-      const openaiMessages = [...messages, userMessage].map((msg) => ({
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
-      }));
-
-      // Import and use OpenAI service
-      const { openaiService } = await import("@/lib/openai");
-      const response = await openaiService.sendMessage(openaiMessages);
-
-      // Remove typing indicator and add assistant response
-      const updatedMessages = messages.filter((m) => m.id !== "typing");
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: response,
-        role: "assistant",
-        timestamp: new Date(),
-      };
-
-      // Update the session with the response (remove typing, add response)
-      if (currentSession) {
-        const sessionWithoutTyping = {
-          ...currentSession,
-          messages: updatedMessages.concat([assistantMessage]),
-        };
-        addMessageToSession(currentSessionId!, assistantMessage);
-      }
+      await sendChatMessage(messageContent);
+      toast.success("Message sent successfully");
     } catch (error) {
       console.error("Error sending message:", error);
 
@@ -144,23 +92,14 @@ const Index = () => {
         ) {
           errorMessage =
             "Network error. Please check your connection and try again.";
+        } else {
+          errorMessage = error.message;
         }
       }
 
       toast.error(errorMessage);
-
-      // Remove typing indicator and add error message
-      if (currentSessionId) {
-        const errorResponseMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: `I apologize, but I encountered an error: ${errorMessage}`,
-          role: "assistant",
-          timestamp: new Date(),
-        };
-
-        // Update session without typing indicator
-        addMessageToSession(currentSessionId, errorResponseMessage);
-      }
+      // Restore the input value if there was an error
+      setInputValue(messageContent);
     } finally {
       setIsLoading(false);
     }
@@ -331,7 +270,7 @@ const Index = () => {
                       {message.role === "user" ? "You" : "Umbra"}
                     </span>
                     <span className="text-xs text-slate-400 dark:text-slate-500">
-                      {message.timestamp.toLocaleTimeString([], {
+                      {new Date(message.created_at).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
@@ -347,37 +286,24 @@ const Index = () => {
                     )}
                   >
                     <CardContent className="p-4">
-                      {message.isTyping ? (
-                        <div className="flex items-center gap-1">
-                          <div className="flex gap-1">
-                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
-                          </div>
-                          <span className="text-sm text-slate-500 ml-2">
-                            Thinking...
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                            {message.content}
-                          </p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => copyMessage(message.content)}
-                            className={cn(
-                              "opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto",
-                              message.role === "user"
-                                ? "text-white/70 hover:text-white hover:bg-white/10"
-                                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300",
-                            )}
-                          >
-                            <Copy className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                          {message.content}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyMessage(message.content)}
+                          className={cn(
+                            "opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto",
+                            message.role === "user"
+                              ? "text-white/70 hover:text-white hover:bg-white/10"
+                              : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300",
+                          )}
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -395,7 +321,7 @@ const Index = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                disabled={isLoading}
+                disabled={isLoading || chatLoading}
                 className="pr-12 py-6 text-base border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm focus:bg-white dark:focus:bg-slate-900 transition-all duration-200"
               />
               <Badge
@@ -407,11 +333,11 @@ const Index = () => {
             </div>
             <Button
               onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
+              disabled={!inputValue.trim() || isLoading || chatLoading}
               size="lg"
               className="px-6 py-6 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              {isLoading ? (
+              {isLoading || chatLoading ? (
                 <RefreshCw className="w-5 h-5 animate-spin" />
               ) : (
                 <Send className="w-5 h-5" />
@@ -422,7 +348,7 @@ const Index = () => {
           <div className="flex items-center justify-between mt-3 text-xs text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
-              <span>{messages.filter((m) => !m.isTyping).length} messages</span>
+              <span>{messages.length} messages</span>
             </div>
             <div className="flex items-center gap-2">
               <div

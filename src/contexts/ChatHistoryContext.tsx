@@ -1,33 +1,35 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
+import { apiClient } from "@/lib/api";
 
 export interface ChatMessage {
   id: string;
   content: string;
   role: "user" | "assistant";
-  timestamp: Date;
-  isTyping?: boolean;
+  created_at: string;
 }
 
 export interface ChatSession {
   id: string;
   title: string;
   messages: ChatMessage[];
-  createdAt: Date;
-  updatedAt: Date;
-  userId: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  message_count: number;
 }
 
 interface ChatHistoryContextType {
   sessions: ChatSession[];
   currentSessionId: string | null;
   currentSession: ChatSession | null;
-  createNewSession: (title?: string) => string;
+  isLoading: boolean;
+  createNewSession: (title?: string) => Promise<string>;
   switchToSession: (sessionId: string) => void;
-  addMessageToSession: (sessionId: string, message: ChatMessage) => void;
-  updateSessionTitle: (sessionId: string, title: string) => void;
-  deleteSession: (sessionId: string) => void;
-  clearAllSessions: () => void;
+  sendMessage: (content: string) => Promise<void>;
+  updateSessionTitle: (sessionId: string, title: string) => Promise<void>;
+  deleteSession: (sessionId: string) => Promise<void>;
+  refreshSessions: () => Promise<void>;
 }
 
 const ChatHistoryContext = createContext<ChatHistoryContextType | undefined>(
@@ -52,164 +54,166 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   const { user, isAuthenticated } = useAuth();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Load chat history when user changes
+  // Load chat sessions when user changes
   useEffect(() => {
     if (isAuthenticated && user) {
-      loadChatHistory();
+      loadChatSessions();
     } else {
       setSessions([]);
       setCurrentSessionId(null);
     }
   }, [isAuthenticated, user]);
 
-  const loadChatHistory = () => {
+  const loadChatSessions = async () => {
+    if (!isAuthenticated) return;
+
+    setIsLoading(true);
     try {
-      const storedHistory = localStorage.getItem("scriptor_chat_history");
-      if (storedHistory) {
-        const history = JSON.parse(storedHistory);
-        const userSessions = history
-          .filter((session: any) => session.userId === user?.id)
-          .map((session: any) => ({
-            ...session,
-            createdAt: new Date(session.createdAt),
-            updatedAt: new Date(session.updatedAt),
-            messages: session.messages.map((msg: any) => ({
-              ...msg,
-              timestamp: new Date(msg.timestamp),
-            })),
-          }));
+      const sessionData = await apiClient.getChatSessions();
+      setSessions(sessionData);
 
-        setSessions(userSessions);
-
-        // Set current session to the most recent one, or create a new one
-        if (userSessions.length > 0) {
-          const mostRecent = userSessions.sort(
-            (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
-          )[0];
-          setCurrentSessionId(mostRecent.id);
-        } else {
-          createNewSession();
-        }
+      // Set current session to the most recent one, or create a new one
+      if (sessionData.length > 0) {
+        const mostRecent = sessionData.sort(
+          (a, b) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+        )[0];
+        setCurrentSessionId(mostRecent.id);
       } else {
-        createNewSession();
+        // Create initial session if none exists
+        await createNewSession("Welcome to Scriptor Umbra");
       }
     } catch (error) {
-      console.error("Error loading chat history:", error);
-      createNewSession();
+      console.error("Error loading chat sessions:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const saveChatHistory = (updatedSessions: ChatSession[]) => {
+  const refreshSessions = async () => {
+    await loadChatSessions();
+  };
+
+  const createNewSession = async (title?: string): Promise<string> => {
+    if (!isAuthenticated) return "";
+
     try {
-      // Get all sessions from localStorage, not just current user's
-      const existingHistory = localStorage.getItem("scriptor_chat_history");
-      let allSessions: ChatSession[] = [];
+      const newSession = await apiClient.createChatSession(title);
 
-      if (existingHistory) {
-        allSessions = JSON.parse(existingHistory);
-        // Remove current user's sessions and add updated ones
-        allSessions = allSessions.filter(
-          (session) => session.userId !== user?.id,
-        );
-      }
+      // Add the welcome message to the session object
+      const sessionWithMessages = {
+        ...newSession,
+        messages: [
+          {
+            id: `welcome_${Date.now()}`,
+            role: "assistant" as const,
+            content:
+              "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
+            created_at: new Date().toISOString(),
+          },
+        ],
+        message_count: 1,
+      };
 
-      allSessions.push(...updatedSessions);
-      localStorage.setItem(
-        "scriptor_chat_history",
-        JSON.stringify(allSessions),
-      );
+      setSessions((prev) => [sessionWithMessages, ...prev]);
+      setCurrentSessionId(newSession.id);
+
+      return newSession.id;
     } catch (error) {
-      console.error("Error saving chat history:", error);
+      console.error("Error creating chat session:", error);
+      throw error;
     }
-  };
-
-  const createNewSession = (title?: string): string => {
-    if (!user) return "";
-
-    const newSession: ChatSession = {
-      id: `session_${Date.now()}`,
-      title: title || "New Conversation",
-      messages: [
-        {
-          id: "welcome",
-          content:
-            "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
-          role: "assistant",
-          timestamp: new Date(),
-        },
-      ],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: user.id,
-    };
-
-    const updatedSessions = [...sessions, newSession];
-    setSessions(updatedSessions);
-    setCurrentSessionId(newSession.id);
-    saveChatHistory(updatedSessions);
-
-    return newSession.id;
   };
 
   const switchToSession = (sessionId: string) => {
     setCurrentSessionId(sessionId);
   };
 
-  const addMessageToSession = (sessionId: string, message: ChatMessage) => {
-    const updatedSessions = sessions.map((session) => {
-      if (session.id === sessionId) {
-        return {
-          ...session,
-          messages: [...session.messages, message],
-          updatedAt: new Date(),
-        };
-      }
-      return session;
-    });
+  const sendMessage = async (content: string): Promise<void> => {
+    if (!currentSessionId || !isAuthenticated) return;
 
-    setSessions(updatedSessions);
-    saveChatHistory(updatedSessions);
-  };
+    try {
+      const response = await apiClient.sendMessage(currentSessionId, content);
 
-  const updateSessionTitle = (sessionId: string, title: string) => {
-    const updatedSessions = sessions.map((session) => {
-      if (session.id === sessionId) {
-        return {
-          ...session,
-          title,
-          updatedAt: new Date(),
-        };
-      }
-      return session;
-    });
+      // Update the current session with new messages
+      setSessions((prev) =>
+        prev.map((session) => {
+          if (session.id === currentSessionId) {
+            const updatedMessages = [
+              ...session.messages,
+              {
+                id: response.userMessage.id,
+                role: response.userMessage.role,
+                content: response.userMessage.content,
+                created_at: response.userMessage.created_at,
+              },
+              {
+                id: response.assistantMessage.id,
+                role: response.assistantMessage.role,
+                content: response.assistantMessage.content,
+                created_at: response.assistantMessage.created_at,
+              },
+            ];
 
-    setSessions(updatedSessions);
-    saveChatHistory(updatedSessions);
-  };
-
-  const deleteSession = (sessionId: string) => {
-    const updatedSessions = sessions.filter(
-      (session) => session.id !== sessionId,
-    );
-    setSessions(updatedSessions);
-    saveChatHistory(updatedSessions);
-
-    // If we're deleting the current session, switch to another or create new
-    if (currentSessionId === sessionId) {
-      if (updatedSessions.length > 0) {
-        setCurrentSessionId(updatedSessions[0].id);
-      } else {
-        createNewSession();
-      }
+            return {
+              ...session,
+              messages: updatedMessages,
+              updated_at: new Date().toISOString(),
+              message_count: updatedMessages.length,
+            };
+          }
+          return session;
+        }),
+      );
+    } catch (error) {
+      console.error("Error sending message:", error);
+      throw error;
     }
   };
 
-  const clearAllSessions = () => {
-    setSessions([]);
-    setCurrentSessionId(null);
-    saveChatHistory([]);
-    createNewSession();
+  const updateSessionTitle = async (
+    sessionId: string,
+    title: string,
+  ): Promise<void> => {
+    try {
+      await apiClient.updateSessionTitle(sessionId, title);
+
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === sessionId
+            ? { ...session, title, updated_at: new Date().toISOString() }
+            : session,
+        ),
+      );
+    } catch (error) {
+      console.error("Error updating session title:", error);
+      throw error;
+    }
+  };
+
+  const deleteSession = async (sessionId: string): Promise<void> => {
+    try {
+      await apiClient.deleteSession(sessionId);
+
+      const updatedSessions = sessions.filter(
+        (session) => session.id !== sessionId,
+      );
+      setSessions(updatedSessions);
+
+      // If we're deleting the current session, switch to another or create new
+      if (currentSessionId === sessionId) {
+        if (updatedSessions.length > 0) {
+          setCurrentSessionId(updatedSessions[0].id);
+        } else {
+          await createNewSession();
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      throw error;
+    }
   };
 
   const currentSession =
@@ -219,12 +223,13 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
     sessions,
     currentSessionId,
     currentSession,
+    isLoading,
     createNewSession,
     switchToSession,
-    addMessageToSession,
+    sendMessage,
     updateSessionTitle,
     deleteSession,
-    clearAllSessions,
+    refreshSessions,
   };
 
   return (
