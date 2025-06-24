@@ -31,6 +31,7 @@ import {
   Settings,
   History,
   Crown,
+  X,
 } from "lucide-react";
 import { stackClientApp } from "@/stack";
 import { useChatHistory } from "@/contexts/ChatHistoryContext";
@@ -46,19 +47,6 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [user, setUser] = useState<any>(null);
-  
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const currentUser = await stackClientApp.getUser();
-        setUser(currentUser);
-      } catch (error) {
-        console.log("No authenticated user");
-      }
-    };
-    getUser();
-  }, []);
   const {
     sessions,
     currentSessionId,
@@ -66,6 +54,8 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     switchToSession,
     deleteSession,
     clearAllSessions,
+    user,
+    isAuthenticated,
   } = useChatHistory();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -161,7 +151,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] lg:hidden"
           onClick={onClose}
         />
       )}
@@ -169,17 +159,28 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed top-0 left-0 h-full w-80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-r border-slate-200/60 dark:border-slate-800/60 z-50 transform transition-transform duration-300 ease-in-out",
+          "fixed top-0 left-0 h-full w-80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-r border-slate-200/60 dark:border-slate-800/60 z-[60] transform transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-4 border-b border-slate-200/60 dark:border-slate-800/60">
+          <div className="pt-6 px-4 pb-4 border-b border-slate-200/60 dark:border-slate-800/60">
+            {/* Close Button */}
+            <div className="flex justify-end mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="w-8 h-8 p-0 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
             <div className="flex items-center gap-3 mb-4">
               <Avatar className="w-10 h-10">
                 <AvatarImage src={user?.profileImageUrl ?? undefined} alt={user?.displayName ?? ""} />
-                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-medium">
+                <AvatarFallback className="bg-gradient-to-br from-sky-500 to-blue-600 text-white font-medium">
                   {user?.displayName?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -220,7 +221,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
             <Button
               onClick={handleNewChat}
-              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+              className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Conversation
@@ -262,7 +263,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                           className={cn(
                             "group relative p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50",
                             currentSessionId === session.id
-                              ? "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800"
+                              ? "bg-sky-50 dark:bg-sky-950/30 border-sky-200 dark:border-sky-800"
                               : "bg-white dark:bg-slate-800/30 border-slate-200 dark:border-slate-700",
                           )}
                           onClick={() => handleSessionClick(session.id)}

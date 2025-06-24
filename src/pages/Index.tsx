@@ -6,8 +6,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Send,
-  Bot,
   User,
   Sparkles,
   MessageSquare,
@@ -19,6 +25,9 @@ import {
   AlertCircle,
   Menu,
   Plus,
+  Feather,
+  LogOut,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -42,27 +51,15 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
-  const [user, setUser] = useState<any>(null);
-  
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const currentUser = await stackClientApp.getUser();
-        setUser(currentUser);
-      } catch (error) {
-        console.log("No authenticated user");
-      }
-    };
-    getUser();
-  }, []);
-  
-  const isAuthenticated = !!user;
   const {
     currentSession,
     currentSessionId,
     sendMessage: sendChatMessage,
     createNewSession,
     isLoading: chatLoading,
+    authLoading,
+    isAuthenticated,
+    user,
   } = useChatHistory();
 
   // Check if API key is configured
@@ -92,7 +89,11 @@ const Index = () => {
 
       let errorMessage = "Failed to send message. Please try again.";
       if (error instanceof Error) {
-        if (error.message.includes("API key")) {
+        if (error.message.includes("Authentication required")) {
+          errorMessage = "Please sign in to continue.";
+          window.location.href = "/sign-in";
+          return;
+        } else if (error.message.includes("API key")) {
           errorMessage =
             "OpenAI API key not configured. Please check your environment variables.";
         } else if (
@@ -119,7 +120,7 @@ const Index = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -135,6 +136,68 @@ const Index = () => {
     createNewSession();
     toast.success("New conversation started");
   };
+
+  const handleSignOut = async () => {
+    try {
+      await stackClientApp.signOut();
+      toast.success("Signed out successfully");
+      window.location.href = "/sign-in";
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast.error("Failed to sign out");
+    }
+  };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/20 flex items-center justify-center">
+        <div className="text-center">
+          <img 
+            src="/logo.png" 
+            alt="Scriptor Umbra Logo" 
+            className="w-16 h-16 rounded-2xl object-cover mx-auto mb-4 animate-pulse"
+          />
+          <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            Loading Scriptor Umbra
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400">
+            Initializing your ghostwriting assistant...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to sign-in if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/20 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <img 
+            src="/logo.png" 
+            alt="Scriptor Umbra Logo" 
+            className="w-20 h-20 rounded-2xl object-cover mx-auto mb-6"
+          />
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent mb-4">
+            Scriptor Umbra
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            Your intelligent ghostwriting assistant for articles, books, copywriting, and long-form content creation.
+          </p>
+          <p className="text-slate-500 dark:text-slate-500 mb-8">
+            Please sign in to access your writing workspace.
+          </p>
+          <Button 
+            onClick={() => window.location.href = '/sign-in'}
+            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+          >
+            Sign In to Continue
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Show setup instructions if no API key is configured or user explicitly requests it
   if (!hasApiKey || showSetup) {
@@ -176,13 +239,15 @@ const Index = () => {
               <Menu className="w-5 h-5" />
             </Button>
             <div className="relative">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="Scriptor Umbra Logo" 
+                className="w-10 h-10 rounded-2xl object-cover"
+              />
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-slate-950 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-indigo-600 to-purple-600 dark:from-white dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
                 Scriptor Umbra
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -198,25 +263,14 @@ const Index = () => {
                 Setup Required
               </Badge>
             )}
-            {!isAuthenticated ? (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => window.location.href = '/sign-in'}
-                className="mr-2"
-              >
-                Sign In
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2 mr-2">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback>{user?.displayName?.[0] || 'U'}</AvatarFallback>
-                </Avatar>
-                <span className="text-sm text-slate-600 dark:text-slate-400">
-                  {user?.displayName || user?.primaryEmail || 'User'}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 mr-2">
+              <Avatar className="w-8 h-8">
+                <AvatarFallback>{user?.displayName?.[0] || 'U'}</AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                {user?.displayName || user?.primaryEmail || 'User'}
+              </span>
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -233,26 +287,37 @@ const Index = () => {
             >
               <Plus className="w-4 h-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="text-slate-600 dark:text-slate-400"
-            >
-              {theme === "dark" ? (
-                <Sun className="w-4 h-4" />
-              ) : (
-                <Moon className="w-4 h-4" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowSetup(true)}
-              className="text-slate-600 dark:text-slate-400"
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-600 dark:text-slate-400"
+                >
+                  <Settings className="w-4 h-4" />
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => setShowSetup(true)}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                  {theme === "dark" ? (
+                    <Sun className="w-4 h-4 mr-2" />
+                  ) : (
+                    <Moon className="w-4 h-4 mr-2" />
+                  )}
+                  {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -273,7 +338,7 @@ const Index = () => {
                 <Avatar className="w-8 h-8 border-2 border-white dark:border-slate-800 shadow-sm">
                   <AvatarImage
                     src={
-                      message.role === "user" ? undefined : "/bot-avatar.png"
+                      message.role === "user" ? undefined : "/logo.png"
                     }
                   />
                   <AvatarFallback
@@ -281,13 +346,13 @@ const Index = () => {
                       "text-xs font-medium",
                       message.role === "user"
                         ? "bg-gradient-to-br from-blue-500 to-cyan-500 text-white"
-                        : "bg-gradient-to-br from-indigo-500 to-purple-500 text-white",
+                        : "bg-gradient-to-br from-blue-500 to-indigo-500 text-white",
                     )}
                   >
                     {message.role === "user" ? (
                       <User className="w-4 h-4" />
                     ) : (
-                      <Bot className="w-4 h-4" />
+                      <Feather className="w-4 h-4" />
                     )}
                   </AvatarFallback>
                 </Avatar>
@@ -314,7 +379,7 @@ const Index = () => {
                     className={cn(
                       "border-0 shadow-sm",
                       message.role === "user"
-                        ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white"
+                        ? "bg-gradient-to-br from-sky-600 to-blue-700 text-white"
                         : "bg-white dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50",
                     )}
                   >
@@ -353,7 +418,7 @@ const Index = () => {
                 placeholder="Type your message..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 disabled={isLoading || chatLoading}
                 className="pr-12 py-6 text-base border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm focus:bg-white dark:focus:bg-slate-900 transition-all duration-200"
               />
@@ -368,7 +433,7 @@ const Index = () => {
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isLoading || chatLoading}
               size="lg"
-              className="px-6 py-6 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+              className="px-6 py-6 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {isLoading || chatLoading ? (
                 <RefreshCw className="w-5 h-5 animate-spin" />

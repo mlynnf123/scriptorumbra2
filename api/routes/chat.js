@@ -15,6 +15,8 @@ const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
 
 // Get all chat sessions for the authenticated user
 router.get("/sessions", authenticateToken, async (req, res) => {
+  console.log("📋 Getting sessions for user:", req.user.id);
+  
   const client = await pool.connect();
 
   try {
@@ -44,6 +46,7 @@ router.get("/sessions", authenticateToken, async (req, res) => {
       [req.user.id],
     );
 
+
     const sessions = result.rows.map((session) => ({
       ...session,
       messages: session.messages || [],
@@ -54,10 +57,13 @@ router.get("/sessions", authenticateToken, async (req, res) => {
       data: { sessions },
     });
   } catch (error) {
-    console.error("Get sessions error:", error);
+    console.error("❌ Get sessions error:", error);
+    console.error("Error details:", error.message);
+    console.error("Error stack:", error.stack);
     res.status(500).json({
       success: false,
       message: "Failed to retrieve chat sessions",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   } finally {
     client.release();
@@ -115,10 +121,26 @@ router.get("/sessions/:sessionId", authenticateToken, async (req, res) => {
 
 // Create new chat session
 router.post("/sessions", authenticateToken, async (req, res) => {
+  
   const client = await pool.connect();
 
   try {
     const { title = "New Conversation" } = req.body;
+
+    // Get real user info from request body if provided, otherwise use defaults
+    const realEmail = req.body.userEmail || req.user.email;
+    const realName = req.body.userName || req.user.name;
+
+    // First, ensure the user exists in our database (upsert)
+    await client.query(
+      `INSERT INTO users (id, email, name) 
+       VALUES ($1, $2, $3) 
+       ON CONFLICT (id) DO UPDATE SET 
+         email = EXCLUDED.email,
+         name = EXCLUDED.name,
+         updated_at = NOW()`,
+      [req.user.id, realEmail, realName],
+    );
 
     const result = await client.query(
       `INSERT INTO chat_sessions (user_id, title) 
@@ -140,16 +162,20 @@ router.post("/sessions", authenticateToken, async (req, res) => {
       ],
     );
 
+
     res.status(201).json({
       success: true,
       message: "Chat session created successfully",
       data: { session },
     });
   } catch (error) {
-    console.error("Create session error:", error);
+    console.error("❌ Create session error:", error);
+    console.error("Error details:", error.message);
+    console.error("Error stack:", error.stack);
     res.status(500).json({
       success: false,
       message: "Failed to create chat session",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   } finally {
     client.release();
@@ -162,6 +188,7 @@ router.post(
   authenticateToken,
   validate("chatMessage"),
   async (req, res) => {
+
     const client = await pool.connect();
 
     try {
@@ -203,17 +230,22 @@ router.post(
       const messages = historyResult.rows;
 
       // Generate AI response
+      console.log("🤖 Generating AI response with assistant ID:", ASSISTANT_ID);
+      console.log("📝 Message history length:", messages.length);
+      
       let assistantResponse;
       try {
         if (ASSISTANT_ID) {
-          // Use Assistant API
+          console.log("🎯 Using Assistant API");
           assistantResponse = await useAssistantAPI(messages);
         } else {
-          // Use Chat Completion API
+          console.log("💬 Using Chat Completion API");
           assistantResponse = await useChatCompletion(messages);
         }
+        console.log("✅ AI response generated successfully");
       } catch (aiError) {
-        console.error("OpenAI API error:", aiError);
+        console.error("❌ OpenAI API error:", aiError);
+        console.error("Error details:", aiError.message);
         assistantResponse =
           "I apologize, but I'm experiencing technical difficulties. Please try again in a moment.";
       }

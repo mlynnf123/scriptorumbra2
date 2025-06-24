@@ -10,6 +10,9 @@ interface ChatHistoryContextType {
   currentSessionId: string | null;
   currentSession: ChatSession | null;
   isLoading: boolean;
+  authLoading: boolean;
+  isAuthenticated: boolean;
+  user: any;
   createNewSession: (title?: string) => Promise<string>;
   switchToSession: (sessionId: string) => void;
   sendMessage: (content: string) => Promise<void>;
@@ -42,15 +45,19 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   
   // Try to get the current user
   useEffect(() => {
     const getUser = async () => {
       try {
         const currentUser = await stackClientApp.getUser();
+        console.log("ChatHistoryContext - User:", currentUser);
         setUser(currentUser);
       } catch (error) {
-        console.log("No authenticated user");
+        console.log("ChatHistoryContext - No authenticated user:", error);
+      } finally {
+        setAuthLoading(false);
       }
     };
     getUser();
@@ -63,8 +70,8 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
     if (isAuthenticated && user) {
       loadChatSessions();
     } else {
-      // Create a mock session for testing
-      createNewSession("Demo Session");
+      setSessions([]);
+      setCurrentSessionId(null);
     }
   }, [isAuthenticated, user]);
 
@@ -99,33 +106,16 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   };
 
   const createNewSession = async (title?: string): Promise<string> => {
-    // Temporarily create a mock session for testing
     if (!isAuthenticated) {
-      const mockSessionId = `mock_${Date.now()}`;
-      const mockSession: ChatSession = {
-        id: mockSessionId,
-        title: title || "Test Session",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        messages: [
-          {
-            id: `welcome_${Date.now()}`,
-            role: "assistant" as const,
-            content:
-              "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
-            created_at: new Date().toISOString(),
-          },
-        ],
-        message_count: 1,
-      };
-      
-      setSessions([mockSession]);
-      setCurrentSessionId(mockSessionId);
-      return mockSessionId;
+      throw new Error("Authentication required to create a session");
     }
 
     try {
-      const newSession = await apiClient.createChatSession(title);
+      const newSession = await apiClient.createChatSession(
+        title,
+        user?.primaryEmail || user?.email,
+        user?.displayName || user?.name || user?.primaryEmail
+      );
 
       // Add the welcome message to the session object
       const sessionWithMessages = {
@@ -157,38 +147,8 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   };
 
   const sendMessage = async (content: string): Promise<void> => {
-    if (!currentSessionId) return;
-
-    // Temporarily handle mock sessions
-    if (!isAuthenticated && currentSessionId.startsWith('mock_')) {
-      const userMessage: ChatMessage = {
-        id: `user_${Date.now()}`,
-        role: "user",
-        content: content,
-        created_at: new Date().toISOString(),
-      };
-      
-      const assistantMessage: ChatMessage = {
-        id: `assistant_${Date.now()}`,
-        role: "assistant",
-        content: "I'm currently running in demo mode. To use the full Scriptor Umbra experience with OpenAI integration, please set up authentication.",
-        created_at: new Date().toISOString(),
-      };
-      
-      setSessions((prev) =>
-        prev.map((session) => {
-          if (session.id === currentSessionId) {
-            return {
-              ...session,
-              messages: [...session.messages, userMessage, assistantMessage],
-              updated_at: new Date().toISOString(),
-              message_count: session.message_count + 2,
-            };
-          }
-          return session;
-        }),
-      );
-      return;
+    if (!currentSessionId || !isAuthenticated) {
+      throw new Error("Authentication required to send messages");
     }
 
     try {
@@ -292,6 +252,9 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
     currentSessionId,
     currentSession,
     isLoading,
+    authLoading,
+    isAuthenticated,
+    user,
     createNewSession,
     switchToSession,
     sendMessage,
