@@ -88,7 +88,7 @@ You can customize your assistant's behavior by:
 2. **Modifying the system prompt**: Edit the system message in `src/lib/openai.ts`
 3. **Adjusting parameters**: Modify temperature, max_tokens, etc. in the OpenAI service
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 src/
@@ -145,13 +145,6 @@ Modify the brand elements in `src/pages/Index.tsx`:
 2. Deploy the `dist` folder to Netlify
 3. Add environment variables in Netlify dashboard
 
-## 🔒 Security Best Practices
-
-- **Never commit** your `.env` file to version control
-- **Use environment variables** for all sensitive data
-- **Rotate API keys** regularly
-- **Set usage limits** on your OpenAI account
-- **Monitor API usage** to prevent unexpected charges
 
 ## 🛠️ Development
 
@@ -172,7 +165,7 @@ npm run typecheck    # TypeScript type checking
 3. **API Changes**: Modify `src/lib/openai.ts`
 4. **Styling**: Update `src/index.css` or component styles
 
-## 📚 Tech Stack
+## Tech Stack
 
 - **React 18** - UI framework
 - **TypeScript** - Type safety
@@ -184,32 +177,4 @@ npm run typecheck    # TypeScript type checking
 - **Framer Motion** - Animations
 - **Lucide React** - Beautiful icons
 
-## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if needed
-5. Submit a pull request
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## 🆘 Support
-
-- 📖 Check the [setup instructions](src/components/SetupInstructions.tsx) in the app
-- 🐛 [Report issues](https://github.com/your-username/umbra-chat/issues)
-- 💡 [Request features](https://github.com/your-username/umbra-chat/discussions)
-- 📧 Email: your-email@example.com
-
-## 🙏 Acknowledgments
-
-- OpenAI for the amazing AI capabilities
-- Shadcn for the beautiful UI components
-- Vercel for hosting and deployment
-- The React and TypeScript communities
-
----
-
-Made with ❤️ by [Your Name](https://github.com/your-username)
