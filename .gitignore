@@ -6,10 +6,6 @@ api/node_modules/
 dist/
 build/
 
-# Environment variables
-.env
-.env.local
-.env.production.local
 
 # Development
 .DS_Store
@@ -26,3 +22,4 @@ build/
 # Temporary files
 tmp/
 temp/
+.env.local

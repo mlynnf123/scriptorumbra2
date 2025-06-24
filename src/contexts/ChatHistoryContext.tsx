@@ -1,23 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useAuth } from "./AuthContext";
+import { useUser } from "@stackframe/react";
 import { apiClient } from "@/lib/api";
+import { ChatMessage, ChatSession } from "@/types/chat";
 
-export interface ChatMessage {
-  id: string;
-  content: string;
-  role: "user" | "assistant";
-  created_at: string;
-}
 
-export interface ChatSession {
-  id: string;
-  title: string;
-  messages: ChatMessage[];
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-  message_count: number;
-}
 
 interface ChatHistoryContextType {
   sessions: ChatSession[];
@@ -51,7 +37,8 @@ interface ChatHistoryProviderProps {
 export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   children,
 }) => {
-  const { user, isAuthenticated } = useAuth();
+  const user = useUser();
+  const isAuthenticated = !!user;
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
