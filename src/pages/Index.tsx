@@ -60,10 +60,11 @@ const Index = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue("");
     setIsLoading(true);
 
-    // Simulate typing indicator
+    // Show typing indicator
     const typingMessage: Message = {
       id: "typing",
       content: "",
@@ -74,14 +75,28 @@ const Index = () => {
     setMessages((prev) => [...prev, typingMessage]);
 
     try {
-      // TODO: Replace with actual OpenAI API call
-      // For now, simulate a response
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Check if OpenAI API key is configured
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+
+      if (!apiKey) {
+        throw new Error(
+          "OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your environment variables.",
+        );
+      }
+
+      // Prepare messages for OpenAI (convert to their format)
+      const openaiMessages = [...messages, userMessage].map((msg) => ({
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+      }));
+
+      // Import and use OpenAI service
+      const { openaiService } = await import("@/lib/openai");
+      const response = await openaiService.sendMessage(openaiMessages);
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content:
-          "I'm a demo response. To connect this to your OpenAI Assistant, you'll need to add your OpenAI API key to the environment variables and implement the API call.",
+        content: response,
         role: "assistant",
         timestamp: new Date(),
       };
@@ -91,8 +106,39 @@ const Index = () => {
       );
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message. Please try again.");
-      setMessages((prev) => prev.filter((m) => m.id !== "typing"));
+
+      let errorMessage = "Failed to send message. Please try again.";
+      if (error instanceof Error) {
+        if (error.message.includes("API key")) {
+          errorMessage =
+            "OpenAI API key not configured. Please check your environment variables.";
+        } else if (
+          error.message.includes("rate limit") ||
+          error.message.includes("quota")
+        ) {
+          errorMessage = "Rate limit exceeded. Please try again in a moment.";
+        } else if (
+          error.message.includes("network") ||
+          error.message.includes("fetch")
+        ) {
+          errorMessage =
+            "Network error. Please check your connection and try again.";
+        }
+      }
+
+      toast.error(errorMessage);
+
+      // Add error message to chat
+      const errorResponseMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: `I apologize, but I encountered an error: ${errorMessage}`,
+        role: "assistant",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) =>
+        prev.filter((m) => m.id !== "typing").concat([errorResponseMessage]),
+      );
     } finally {
       setIsLoading(false);
     }
