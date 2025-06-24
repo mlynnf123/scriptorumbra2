@@ -101,16 +101,26 @@ export default async function handler(req, res) {
   }
 
   // Authentication middleware
-  let authResult;
   try {
-    authResult = await new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       authenticateToken(req, res, (error) => {
-        if (error) reject(error);
-        else resolve();
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
       });
     });
   } catch (error) {
-    return; // Response already sent by auth middleware
+    // If auth middleware hasn't sent a response yet, send one
+    if (!res.headersSent) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication failed",
+        error: error.message
+      });
+    }
+    return;
   }
 
   const pool = getPool();
