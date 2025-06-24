@@ -61,12 +61,16 @@ const createTables = async () => {
 
     // Create triggers for updated_at
     await client.query(`
-      CREATE TRIGGER IF NOT EXISTS update_users_updated_at 
-        BEFORE UPDATE ON users 
+      DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+      CREATE TRIGGER update_users_updated_at
+        BEFORE UPDATE ON users
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-      
-      CREATE TRIGGER IF NOT EXISTS update_chat_sessions_updated_at 
-        BEFORE UPDATE ON chat_sessions 
+    `);
+
+    await client.query(`
+      DROP TRIGGER IF EXISTS update_chat_sessions_updated_at ON chat_sessions;
+      CREATE TRIGGER update_chat_sessions_updated_at
+        BEFORE UPDATE ON chat_sessions
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     `);
 
