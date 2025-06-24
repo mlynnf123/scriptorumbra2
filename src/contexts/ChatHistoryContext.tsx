@@ -15,6 +15,7 @@ interface ChatHistoryContextType {
   sendMessage: (content: string) => Promise<void>;
   updateSessionTitle: (sessionId: string, title: string) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
+  clearAllSessions: () => Promise<void>;
   refreshSessions: () => Promise<void>;
 }
 
@@ -180,6 +181,17 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
     }
   };
 
+  const clearAllSessions = async () => {
+    try {
+      await apiClient.clearAllSessions();
+      setSessions([]);
+      setCurrentSessionId(null);
+    } catch (error) {
+      console.error("Failed to clear all sessions:", error);
+      throw error;
+    }
+  };
+
   const deleteSession = async (sessionId: string): Promise<void> => {
     try {
       await apiClient.deleteSession(sessionId);
@@ -216,6 +228,7 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
     sendMessage,
     updateSessionTitle,
     deleteSession,
+    clearAllSessions,
     refreshSessions,
   };
 

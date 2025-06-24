@@ -32,7 +32,7 @@ import {
   History,
   Crown,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUser } from "@stackframe/react";
 import { useChatHistory } from "@/contexts/ChatHistoryContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -46,7 +46,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { user, signOut } = useAuth();
+  const user = useUser();
   const {
     sessions,
     currentSessionId,
@@ -105,7 +105,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   };
 
   const handleSignOut = () => {
-    signOut();
+    user?.signOut();
     toast.success("Signed out successfully");
   };
 
@@ -161,17 +161,17 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           <div className="p-4 border-b border-slate-200/60 dark:border-slate-800/60">
             <div className="flex items-center gap-3 mb-4">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={user?.avatar_url} alt={user?.name} />
+                <AvatarImage src={user?.profileImageUrl ?? undefined} alt={user?.displayName ?? ""} />
                 <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-medium">
-                  {user?.name?.charAt(0).toUpperCase()}
+                  {user?.displayName?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-slate-900 dark:text-slate-100 truncate">
-                  {user?.name}
+                  {user?.displayName}
                 </p>
                 <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
-                  {user?.email}
+                  {user?.primaryEmail}
                 </p>
               </div>
               <DropdownMenu>

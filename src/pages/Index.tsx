@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { SetupInstructions } from "@/components/SetupInstructions";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUser } from "@stackframe/react";
 import { useChatHistory } from "@/contexts/ChatHistoryContext";
 import ChatHistorySidebar from "@/components/ChatHistorySidebar";
 
@@ -42,7 +42,8 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
-  const { user } = useAuth();
+  const user = useUser();
+  const isAuthenticated = !!user;
   const {
     currentSession,
     currentSessionId,

@@ -413,4 +413,28 @@ async function useChatCompletion(messages) {
   return response;
 }
 
+// Delete all chat sessions for the authenticated user
+router.delete("/sessions", authenticateToken, async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("DELETE FROM chat_sessions WHERE user_id = $1", [
+      req.user.id,
+    ]);
+
+    res.json({
+      success: true,
+      message: "All chat sessions deleted successfully",
+    });
+  } catch (error) {
+    console.error("Clear all sessions error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete all chat sessions",
+    });
+  } finally {
+    client.release();
+  }
+});
+
 export default router;

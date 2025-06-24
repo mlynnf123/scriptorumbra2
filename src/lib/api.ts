@@ -32,4 +32,8 @@ export const apiClient = {
   deleteSession: async (sessionId: string) => {
     await instance.delete(`/chat/sessions/${sessionId}`);
   },
+
+  clearAllSessions: async () => {
+    await instance.delete('/chat/sessions');
+  },
 };
