@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { apiClient } from "@/lib/api";
 
 export interface User {
   id: string;
   email: string;
   name: string;
-  avatar?: string;
-  createdAt: Date;
+  avatar_url?: string;
+  created_at: string;
 }
 
 interface AuthContextType {
@@ -35,21 +36,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state from localStorage
+  // Initialize auth state from token
   useEffect(() => {
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       try {
-        const storedUser = localStorage.getItem("scriptor_user");
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
-          setUser({
-            ...userData,
-            createdAt: new Date(userData.createdAt),
-          });
+        const token = localStorage.getItem("scriptor_token");
+        if (token) {
+          const userData = await apiClient.getCurrentUser();
+          setUser(userData);
         }
       } catch (error) {
         console.error("Error loading user data:", error);
-        localStorage.removeItem("scriptor_user");
+        localStorage.removeItem("scriptor_token");
       } finally {
         setIsLoading(false);
       }
@@ -62,23 +60,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
 
     try {
-      // Simulate API call - replace with actual authentication
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // For demo purposes, accept any email/password
-      // In production, this would validate against your backend
-      const userData: User = {
-        id: `user_${Date.now()}`,
-        email,
-        name: email.split("@")[0],
-        avatar: `https://api.dicebear.com/7.x/avatars/svg?seed=${email}`,
-        createdAt: new Date(),
-      };
-
-      setUser(userData);
-      localStorage.setItem("scriptor_user", JSON.stringify(userData));
+      const response = await apiClient.login({ email, password });
+      setUser(response.user);
     } catch (error) {
-      throw new Error("Invalid credentials");
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -92,30 +77,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
 
     try {
-      // Simulate API call - replace with actual registration
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const userData: User = {
-        id: `user_${Date.now()}`,
-        email,
-        name,
-        avatar: `https://api.dicebear.com/7.x/avatars/svg?seed=${email}`,
-        createdAt: new Date(),
-      };
-
-      setUser(userData);
-      localStorage.setItem("scriptor_user", JSON.stringify(userData));
+      const response = await apiClient.register({ name, email, password });
+      setUser(response.user);
     } catch (error) {
-      throw new Error("Registration failed");
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    await apiClient.logout();
     setUser(null);
-    localStorage.removeItem("scriptor_user");
-    localStorage.removeItem("scriptor_chat_history");
   };
 
   const value: AuthContextType = {
