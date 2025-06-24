@@ -4,24 +4,7 @@
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "@vercel/node"
-    }
-  },
   "rewrites": [
-    {
-      "source": "/api/chat/sessions",
-      "destination": "/api/chat/sessions"
-    },
-    {
-      "source": "/api/chat/:sessionId",
-      "destination": "/api/chat/[sessionId]/index"
-    },
-    {
-      "source": "/api/chat/:sessionId/messages",
-      "destination": "/api/chat/[sessionId]/messages"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
