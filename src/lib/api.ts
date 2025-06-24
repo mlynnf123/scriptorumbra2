@@ -86,7 +86,7 @@ export const apiClient = {
   },
 
   sendMessage: async (sessionId: string, content: string) => {
-    const response = await instance.post(`/chat/sessions/${sessionId}/messages`, { content });
+    const response = await instance.post(`/send-message`, { sessionId, content });
     return response.data.data;
   },
 
