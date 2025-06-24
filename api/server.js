@@ -23,9 +23,42 @@ app.use(
 );
 
 // CORS configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+  "http://localhost:8081",
+  "http://127.0.0.1:8081",
+];
+
+// Allow Fly.dev domains
+if (process.env.NODE_ENV === "development") {
+  allowedOrigins.push(/\.fly\.dev$/);
+}
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is in allowed list
+      const isAllowed = allowedOrigins.some((allowedOrigin) => {
+        if (typeof allowedOrigin === "string") {
+          return allowedOrigin === origin;
+        } else if (allowedOrigin instanceof RegExp) {
+          return allowedOrigin.test(origin);
+        }
+        return false;
+      });
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.log("CORS blocked origin:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );
@@ -85,7 +118,7 @@ app.use((error, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log("🚀 Scriptor Umbra API Server Started");
-  console.log(`📡 Server running on port ${PORT}`);
+  console.log(`���� Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
 
@@ -111,6 +144,6 @@ process.on("SIGTERM", () => {
 });
 
 process.on("SIGINT", () => {
-  console.log("��� SIGINT received, shutting down gracefully");
+  console.log("👋 SIGINT received, shutting down gracefully");
   process.exit(0);
 });
