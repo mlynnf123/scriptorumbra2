@@ -60,10 +60,14 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
 
-  const handleNewChat = () => {
-    createNewSession();
-    toast.success("New conversation started");
-    onClose();
+  const handleNewChat = async () => {
+    try {
+      await createNewSession();
+      toast.success("New conversation started");
+      onClose();
+    } catch (error) {
+      toast.error("Failed to create new conversation");
+    }
   };
 
   const handleSessionClick = (sessionId: string) => {
@@ -76,10 +80,14 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     setDeleteDialogOpen(true);
   };
 
-  const confirmDeleteSession = () => {
+  const confirmDeleteSession = async () => {
     if (sessionToDelete) {
-      deleteSession(sessionToDelete);
-      toast.success("Conversation deleted");
+      try {
+        await deleteSession(sessionToDelete);
+        toast.success("Conversation deleted");
+      } catch (error) {
+        toast.error("Failed to delete conversation");
+      }
       setSessionToDelete(null);
     }
     setDeleteDialogOpen(false);
@@ -101,7 +109,8 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     toast.success("Signed out successfully");
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
     const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
@@ -152,7 +161,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           <div className="p-4 border-b border-slate-200/60 dark:border-slate-800/60">
             <div className="flex items-center gap-3 mb-4">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={user?.avatar} alt={user?.name} />
+                <AvatarImage src={user?.avatar_url} alt={user?.name} />
                 <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-medium">
                   {user?.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
@@ -226,7 +235,9 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   <div className="space-y-2">
                     {sessions
                       .sort(
-                        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+                        (a, b) =>
+                          new Date(b.updated_at).getTime() -
+                          new Date(a.updated_at).getTime(),
                       )
                       .map((session) => (
                         <div
@@ -250,15 +261,10 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                               </p>
                               <div className="flex items-center justify-between mt-2">
                                 <span className="text-xs text-slate-400">
-                                  {formatDate(session.updatedAt)}
+                                  {formatDate(session.updated_at)}
                                 </span>
                                 <Badge variant="secondary" className="text-xs">
-                                  {
-                                    session.messages.filter(
-                                      (msg) => msg.role === "user",
-                                    ).length
-                                  }{" "}
-                                  msgs
+                                  {session.message_count} msgs
                                 </Badge>
                               </div>
                             </div>

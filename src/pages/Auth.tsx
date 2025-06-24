@@ -319,14 +319,6 @@ const Auth = () => {
                 </form>
               </TabsContent>
             </Tabs>
-
-            {/* Demo Info */}
-            <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-              <p className="text-sm text-slate-600 dark:text-slate-400 text-center">
-                <strong>Demo Mode:</strong> Use any email and password to sign
-                in
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
