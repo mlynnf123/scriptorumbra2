@@ -228,8 +228,8 @@ const Index = () => {
       />
       {/* Header */}
       <header className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button
               variant="ghost"
               size="sm"
@@ -242,32 +242,32 @@ const Index = () => {
               <img 
                 src="/logo.png" 
                 alt="Scriptor Umbra Logo" 
-                className="w-10 h-10 rounded-2xl object-cover"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl object-cover"
               />
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-slate-950 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+              <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
                 Scriptor Umbra
               </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
                 Ghostwriting Assistant
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {!hasApiKey && (
-              <Badge variant="destructive" className="mr-2">
+              <Badge variant="destructive" className="mr-1 sm:mr-2 hidden sm:flex">
                 <AlertCircle className="w-3 h-3 mr-1" />
                 Setup Required
               </Badge>
             )}
-            <div className="flex items-center gap-2 mr-2">
+            <div className="flex items-center gap-2 mr-1 sm:mr-2 hidden sm:flex">
               <Avatar className="w-8 h-8">
                 <AvatarFallback>{user?.displayName?.[0] || 'U'}</AvatarFallback>
               </Avatar>
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <span className="text-sm text-slate-600 dark:text-slate-400 hidden md:inline">
                 {user?.displayName || user?.primaryEmail || 'User'}
               </span>
             </div>
@@ -323,15 +323,15 @@ const Index = () => {
       </header>
 
       {/* Main Chat Interface */}
-      <div className="max-w-4xl mx-auto p-4 h-[calc(100vh-80px)] flex flex-col">
+      <div className="max-w-4xl mx-auto p-3 sm:p-4 h-[calc(100vh-70px)] sm:h-[calc(100vh-80px)] flex flex-col">
         {/* Messages */}
-        <ScrollArea ref={scrollAreaRef} className="flex-1 pr-4">
-          <div className="space-y-6 py-4">
+        <ScrollArea ref={scrollAreaRef} className="flex-1 pr-2 sm:pr-4">
+          <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={cn(
-                  "flex gap-4 group",
+                  "flex gap-3 sm:gap-4 group",
                   message.role === "user" ? "flex-row-reverse" : "flex-row",
                 )}
               >
