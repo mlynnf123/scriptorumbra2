@@ -1,40 +1,327 @@
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Send,
+  Bot,
+  User,
+  Sparkles,
+  MessageSquare,
+  Settings,
+  Moon,
+  Sun,
+  Copy,
+  RefreshCw,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import { toast } from "sonner";
+
+interface Message {
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  timestamp: Date;
+  isTyping?: boolean;
+}
+
 const Index = () => {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      content: "Hello! I'm Umbra, your AI assistant. How can I help you today?",
+      role: "assistant",
+      timestamp: new Date(),
+    },
+  ]);
+  const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: inputValue,
+      role: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
+    setIsLoading(true);
+
+    // Simulate typing indicator
+    const typingMessage: Message = {
+      id: "typing",
+      content: "",
+      role: "assistant",
+      timestamp: new Date(),
+      isTyping: true,
+    };
+    setMessages((prev) => [...prev, typingMessage]);
+
+    try {
+      // TODO: Replace with actual OpenAI API call
+      // For now, simulate a response
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content:
+          "I'm a demo response. To connect this to your OpenAI Assistant, you'll need to add your OpenAI API key to the environment variables and implement the API call.",
+        role: "assistant",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) =>
+        prev.filter((m) => m.id !== "typing").concat([assistantMessage]),
+      );
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message. Please try again.");
+      setMessages((prev) => prev.filter((m) => m.id !== "typing"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const copyMessage = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast.success("Message copied to clipboard");
+  };
+
+  const clearChat = () => {
+    setMessages([
+      {
+        id: "1",
+        content:
+          "Hello! I'm Umbra, your AI assistant. How can I help you today?",
+        role: "assistant",
+        timestamp: new Date(),
+      },
+    ]);
+    toast.success("Chat cleared");
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-      <div className="text-center">
-        {/* TODO: replace everything here with the actual app! */}
-        <h1 className="text-2xl font-semibold text-slate-800 flex items-center justify-center gap-3">
-          <svg
-            className="animate-spin h-8 w-8 text-slate-400"
-            viewBox="0 0 50 50"
-          >
-            <circle
-              className="opacity-30"
-              cx="25"
-              cy="25"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              fill="none"
-            />
-            <circle
-              className="text-slate-600"
-              cx="25"
-              cy="25"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              fill="none"
-              strokeDasharray="100"
-              strokeDashoffset="75"
-            />
-          </svg>
-          Generating your app...
-        </h1>
-        <p className="mt-4 text-slate-600 max-w-md">
-          Watch the chat on the left for updates that might need your attention
-          to finish generating
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/20">
+      {/* Header */}
+      <header className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-slate-950 animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-indigo-600 to-purple-600 dark:from-white dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+                Umbra
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                AI Assistant
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearChat}
+              className="text-slate-600 dark:text-slate-400"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="text-slate-600 dark:text-slate-400"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-600 dark:text-slate-400"
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Chat Interface */}
+      <div className="max-w-4xl mx-auto p-4 h-[calc(100vh-80px)] flex flex-col">
+        {/* Messages */}
+        <ScrollArea ref={scrollAreaRef} className="flex-1 pr-4">
+          <div className="space-y-6 py-4">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={cn(
+                  "flex gap-4 group",
+                  message.role === "user" ? "flex-row-reverse" : "flex-row",
+                )}
+              >
+                <Avatar className="w-8 h-8 border-2 border-white dark:border-slate-800 shadow-sm">
+                  <AvatarImage
+                    src={
+                      message.role === "user" ? undefined : "/bot-avatar.png"
+                    }
+                  />
+                  <AvatarFallback
+                    className={cn(
+                      "text-xs font-medium",
+                      message.role === "user"
+                        ? "bg-gradient-to-br from-blue-500 to-cyan-500 text-white"
+                        : "bg-gradient-to-br from-indigo-500 to-purple-500 text-white",
+                    )}
+                  >
+                    {message.role === "user" ? (
+                      <User className="w-4 h-4" />
+                    ) : (
+                      <Bot className="w-4 h-4" />
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div
+                  className={cn(
+                    "flex flex-col max-w-[80%]",
+                    message.role === "user" ? "items-end" : "items-start",
+                  )}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                      {message.role === "user" ? "You" : "Umbra"}
+                    </span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+
+                  <Card
+                    className={cn(
+                      "border-0 shadow-sm",
+                      message.role === "user"
+                        ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white"
+                        : "bg-white dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50",
+                    )}
+                  >
+                    <CardContent className="p-4">
+                      {message.isTyping ? (
+                        <div className="flex items-center gap-1">
+                          <div className="flex gap-1">
+                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
+                          </div>
+                          <span className="text-sm text-slate-500 ml-2">
+                            Thinking...
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                            {message.content}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyMessage(message.content)}
+                            className={cn(
+                              "opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto",
+                              message.role === "user"
+                                ? "text-white/70 hover:text-white hover:bg-white/10"
+                                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300",
+                            )}
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+
+        {/* Input Area */}
+        <div className="border-t border-slate-200/60 dark:border-slate-800/60 pt-4 mt-4">
+          <div className="flex gap-3 items-end">
+            <div className="flex-1 relative">
+              <Input
+                placeholder="Type your message..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isLoading}
+                className="pr-12 py-6 text-base border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm focus:bg-white dark:focus:bg-slate-900 transition-all duration-200"
+              />
+              <Badge
+                variant="secondary"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
+              >
+                ⌘ + Enter
+              </Badge>
+            </div>
+            <Button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isLoading}
+              size="lg"
+              className="px-6 py-6 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              {isLoading ? (
+                <RefreshCw className="w-5 h-5 animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between mt-3 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              <span>{messages.filter((m) => !m.isTyping).length} messages</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span>Connected to OpenAI</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
