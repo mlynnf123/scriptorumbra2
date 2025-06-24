@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { SetupInstructions } from "@/components/SetupInstructions";
-import { useUser } from "@stackframe/react";
+import { stackClientApp } from "@/stack";
 import { useChatHistory } from "@/contexts/ChatHistoryContext";
 import ChatHistorySidebar from "@/components/ChatHistorySidebar";
 
@@ -42,7 +42,20 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
-  const user = useUser();
+  const [user, setUser] = useState<any>(null);
+  
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const currentUser = await stackClientApp.getUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.log("No authenticated user");
+      }
+    };
+    getUser();
+  }, []);
+  
   const isAuthenticated = !!user;
   const {
     currentSession,
@@ -184,6 +197,25 @@ const Index = () => {
                 <AlertCircle className="w-3 h-3 mr-1" />
                 Setup Required
               </Badge>
+            )}
+            {!isAuthenticated ? (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => window.location.href = '/sign-in'}
+                className="mr-2"
+              >
+                Sign In
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 mr-2">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback>{user?.displayName?.[0] || 'U'}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  {user?.displayName || user?.primaryEmail || 'User'}
+                </span>
+              </div>
             )}
             <Button
               variant="ghost"

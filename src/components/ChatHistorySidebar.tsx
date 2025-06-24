@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,7 +32,7 @@ import {
   History,
   Crown,
 } from "lucide-react";
-import { useUser } from "@stackframe/react";
+import { stackClientApp } from "@/stack";
 import { useChatHistory } from "@/contexts/ChatHistoryContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -46,7 +46,19 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   isOpen,
   onClose,
 }) => {
-  const user = useUser();
+  const [user, setUser] = useState<any>(null);
+  
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const currentUser = await stackClientApp.getUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.log("No authenticated user");
+      }
+    };
+    getUser();
+  }, []);
   const {
     sessions,
     currentSessionId,
@@ -104,9 +116,14 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     onClose();
   };
 
-  const handleSignOut = () => {
-    user?.signOut();
-    toast.success("Signed out successfully");
+  const handleSignOut = async () => {
+    try {
+      await stackClientApp.signOut();
+      toast.success("Signed out successfully");
+      window.location.href = '/';
+    } catch (error) {
+      toast.error("Failed to sign out");
+    }
   };
 
   const formatDate = (dateString: string) => {

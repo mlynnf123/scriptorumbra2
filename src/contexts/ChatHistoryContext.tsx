@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useUser } from "@stackframe/react";
+import { stackClientApp } from "@/stack";
 import { apiClient } from "@/lib/api";
 import { ChatMessage, ChatSession } from "@/types/chat";
 
@@ -38,19 +38,33 @@ interface ChatHistoryProviderProps {
 export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   children,
 }) => {
-  const user = useUser();
-  const isAuthenticated = !!user;
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  
+  // Try to get the current user
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const currentUser = await stackClientApp.getUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.log("No authenticated user");
+      }
+    };
+    getUser();
+  }, []);
+  
+  const isAuthenticated = !!user;
 
   // Load chat sessions when user changes
   useEffect(() => {
     if (isAuthenticated && user) {
       loadChatSessions();
     } else {
-      setSessions([]);
-      setCurrentSessionId(null);
+      // Create a mock session for testing
+      createNewSession("Demo Session");
     }
   }, [isAuthenticated, user]);
 
@@ -85,7 +99,30 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   };
 
   const createNewSession = async (title?: string): Promise<string> => {
-    if (!isAuthenticated) return "";
+    // Temporarily create a mock session for testing
+    if (!isAuthenticated) {
+      const mockSessionId = `mock_${Date.now()}`;
+      const mockSession: ChatSession = {
+        id: mockSessionId,
+        title: title || "Test Session",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        messages: [
+          {
+            id: `welcome_${Date.now()}`,
+            role: "assistant" as const,
+            content:
+              "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
+            created_at: new Date().toISOString(),
+          },
+        ],
+        message_count: 1,
+      };
+      
+      setSessions([mockSession]);
+      setCurrentSessionId(mockSessionId);
+      return mockSessionId;
+    }
 
     try {
       const newSession = await apiClient.createChatSession(title);
@@ -120,7 +157,39 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   };
 
   const sendMessage = async (content: string): Promise<void> => {
-    if (!currentSessionId || !isAuthenticated) return;
+    if (!currentSessionId) return;
+
+    // Temporarily handle mock sessions
+    if (!isAuthenticated && currentSessionId.startsWith('mock_')) {
+      const userMessage: ChatMessage = {
+        id: `user_${Date.now()}`,
+        role: "user",
+        content: content,
+        created_at: new Date().toISOString(),
+      };
+      
+      const assistantMessage: ChatMessage = {
+        id: `assistant_${Date.now()}`,
+        role: "assistant",
+        content: "I'm currently running in demo mode. To use the full Scriptor Umbra experience with OpenAI integration, please set up authentication.",
+        created_at: new Date().toISOString(),
+      };
+      
+      setSessions((prev) =>
+        prev.map((session) => {
+          if (session.id === currentSessionId) {
+            return {
+              ...session,
+              messages: [...session.messages, userMessage, assistantMessage],
+              updated_at: new Date().toISOString(),
+              message_count: session.message_count + 2,
+            };
+          }
+          return session;
+        }),
+      );
+      return;
+    }
 
     try {
       const response = await apiClient.sendMessage(currentSessionId, content);

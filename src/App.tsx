@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { ChatHistoryProvider } from "@/contexts/ChatHistoryContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import SignIn from "./pages/SignIn";
 import { Suspense } from "react";
 import { StackHandler, StackProvider, StackTheme } from '@stackframe/react';
 import { stackClientApp } from './stack';
@@ -29,26 +30,27 @@ const App = () => (
         enableSystem
         disableTransitionOnChange
       >
-        <ChatHistoryProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <StackProvider app={stackClientApp}>
-                <StackTheme>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <StackProvider app={stackClientApp}>
+              <StackTheme>
+                <ChatHistoryProvider>
                   <Routes>
                     <Route path="/handler/*" element={<HandlerRoutes />} />
+                    <Route path="/sign-in" element={<SignIn />} />
                     <Route
                       path="/"
                       element={<Index />}
                     />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                </StackTheme>
-              </StackProvider>
-            </BrowserRouter>
-          </TooltipProvider>
-        </ChatHistoryProvider>
+                </ChatHistoryProvider>
+              </StackTheme>
+            </StackProvider>
+          </BrowserRouter>
+        </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </Suspense>
