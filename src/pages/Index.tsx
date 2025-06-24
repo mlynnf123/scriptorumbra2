@@ -17,11 +17,16 @@ import {
   Copy,
   RefreshCw,
   AlertCircle,
+  Menu,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { SetupInstructions } from "@/components/SetupInstructions";
+import { useAuth } from "@/contexts/AuthContext";
+import { useChatHistory } from "@/contexts/ChatHistoryContext";
+import ChatHistorySidebar from "@/components/ChatHistorySidebar";
 
 interface Message {
   id: string;
@@ -32,24 +37,25 @@ interface Message {
 }
 
 const Index = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content:
-        "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
-      role: "assistant",
-      timestamp: new Date(),
-    },
-  ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
+  const {
+    currentSession,
+    currentSessionId,
+    addMessageToSession,
+    createNewSession,
+  } = useChatHistory();
 
   // Check if API key is configured
   const hasApiKey = !!import.meta.env.VITE_OPENAI_API_KEY;
 
+  // Get messages from current session
+  const messages = currentSession?.messages || [];
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
@@ -57,7 +63,7 @@ const Index = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading || !currentSessionId) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -66,7 +72,8 @@ const Index = () => {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // Add user message to current session
+    addMessageToSession(currentSessionId, userMessage);
     const currentInput = inputValue;
     setInputValue("");
     setIsLoading(true);
@@ -79,7 +86,7 @@ const Index = () => {
       timestamp: new Date(),
       isTyping: true,
     };
-    setMessages((prev) => [...prev, typingMessage]);
+    addMessageToSession(currentSessionId, typingMessage);
 
     try {
       // Check if OpenAI API key is configured
@@ -101,6 +108,8 @@ const Index = () => {
       const { openaiService } = await import("@/lib/openai");
       const response = await openaiService.sendMessage(openaiMessages);
 
+      // Remove typing indicator and add assistant response
+      const updatedMessages = messages.filter((m) => m.id !== "typing");
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: response,
@@ -108,9 +117,14 @@ const Index = () => {
         timestamp: new Date(),
       };
 
-      setMessages((prev) =>
-        prev.filter((m) => m.id !== "typing").concat([assistantMessage]),
-      );
+      // Update the session with the response (remove typing, add response)
+      if (currentSession) {
+        const sessionWithoutTyping = {
+          ...currentSession,
+          messages: updatedMessages.concat([assistantMessage]),
+        };
+        addMessageToSession(currentSessionId!, assistantMessage);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
 
@@ -135,17 +149,18 @@ const Index = () => {
 
       toast.error(errorMessage);
 
-      // Add error message to chat
-      const errorResponseMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `I apologize, but I encountered an error: ${errorMessage}`,
-        role: "assistant",
-        timestamp: new Date(),
-      };
+      // Remove typing indicator and add error message
+      if (currentSessionId) {
+        const errorResponseMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: `I apologize, but I encountered an error: ${errorMessage}`,
+          role: "assistant",
+          timestamp: new Date(),
+        };
 
-      setMessages((prev) =>
-        prev.filter((m) => m.id !== "typing").concat([errorResponseMessage]),
-      );
+        // Update session without typing indicator
+        addMessageToSession(currentSessionId, errorResponseMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -164,16 +179,8 @@ const Index = () => {
   };
 
   const clearChat = () => {
-    setMessages([
-      {
-        id: "1",
-        content:
-          "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
-        role: "assistant",
-        timestamp: new Date(),
-      },
-    ]);
-    toast.success("Chat cleared");
+    createNewSession();
+    toast.success("New conversation started");
   };
 
   // Show setup instructions if no API key is configured or user explicitly requests it
@@ -198,10 +205,23 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/20">
+      {/* Chat History Sidebar */}
+      <ChatHistorySidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {/* Header */}
       <header className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
             <div className="relative">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
@@ -228,10 +248,18 @@ const Index = () => {
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setSidebarOpen(true)}
+              className="text-slate-600 dark:text-slate-400 hidden lg:flex"
+            >
+              <MessageSquare className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={clearChat}
               className="text-slate-600 dark:text-slate-400"
             >
-              <RefreshCw className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
