@@ -9,7 +9,7 @@
     "test": "vitest --run",
     "format.fix": "prettier --write .",
     "typecheck": "tsc",
-    "postinstall": "cd api && npm install",
+    "postinstall": "echo 'Frontend-only deployment'",
     "vercel-build": "npm run build"
   },
   "dependencies": {
