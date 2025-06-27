@@ -6,14 +6,14 @@ A beautiful, modern AI chat interface powered by OpenAI, built with React, TypeS
 
 ## ✨ Features
 
-- 🤖 **OpenAI Integration** - Connect to GPT-4 and custom OpenAI Assistants
-- 🎨 **Modern UI** - Beautiful, responsive interface with dark/light themes
-- ⚡ **Real-time Chat** - Smooth, real-time messaging experience
-- 🔒 **Secure** - Environment-based API key management
-- 📱 **Responsive** - Works perfectly on desktop, tablet, and mobile
-- 🌙 **Dark Mode** - Toggle between light and dark themes
-- 📋 **Copy Messages** - Easily copy assistant responses
-- 🔄 **Chat Management** - Clear chat history and manage conversations
+- **OpenAI Integration** - Connect to GPT-4 and custom OpenAI Assistants
+-  **Modern UI** - Beautiful, responsive interface with dark/light themes
+- **Real-time Chat** - Smooth, real-time messaging experience
+-  **Secure** - Environment-based API key management
+- **Responsive** - Works perfectly on desktop, tablet, and mobile
+-  **Dark Mode** - Toggle between light and dark themes
+-  **Copy Messages** - Easily copy assistant responses
+- **Chat Management** - Clear chat history and manage conversations
 
 ## 🚀 Quick Start
 
