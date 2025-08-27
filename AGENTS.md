@@ -108,3 +108,4 @@ app/
 ```
 
 This structure provides a clean separation of concerns between UI components, routes, and application logic.
+

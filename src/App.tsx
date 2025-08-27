@@ -5,7 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ChatHistoryProvider } from "@/contexts/ChatHistoryContext";
-import Index from "./pages/Index";
+import Homepage from "./pages/Homepage";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import { Suspense } from "react";
@@ -40,10 +41,9 @@ const App = () => (
                   <Routes>
                     <Route path="/handler/*" element={<HandlerRoutes />} />
                     <Route path="/sign-in" element={<SignIn />} />
-                    <Route
-                      path="/"
-                      element={<Index />}
-                    />
+                    <Route path="/" element={<Homepage />} />
+                    <Route path="/chat" element={<Chat />} />
+                    <Route path="/chat/:sessionId" element={<Chat />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </ChatHistoryProvider>

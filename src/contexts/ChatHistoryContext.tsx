@@ -13,9 +13,10 @@ interface ChatHistoryContextType {
   authLoading: boolean;
   isAuthenticated: boolean;
   user: any;
-  createNewSession: (title?: string) => Promise<string>;
+  createNewSession: (title?: string, skipWelcome?: boolean) => Promise<string>;
+  createSessionWithMessage: (message: string, title?: string) => Promise<string>;
   switchToSession: (sessionId: string) => void;
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, options?: { model?: string }) => Promise<void>;
   updateSessionTitle: (sessionId: string, title: string) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
   clearAllSessions: () => Promise<void>;
@@ -105,7 +106,7 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
     await loadChatSessions();
   };
 
-  const createNewSession = async (title?: string): Promise<string> => {
+  const createNewSession = async (title?: string, skipWelcome?: boolean): Promise<string> => {
     if (!isAuthenticated) {
       throw new Error("Authentication required to create a session");
     }
@@ -117,21 +118,23 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
         user?.displayName || user?.name || user?.primaryEmail
       );
 
-      // Add the welcome message to the session object
+      // Add the welcome message to the session object only if not skipped
       const sessionWithMessages = {
         ...newSession,
-        messages: [
+        messages: skipWelcome ? [] : [
           {
             id: `welcome_${Date.now()}`,
             role: "assistant" as const,
             content:
-              "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
+              "Hello! I'm Scriptor Umbra, your versatile literary companion. I can channel the writing styles of legendary authors from Hemingway to Plath, from Shakespeare to Bukowski. Whether you need existential prose, whimsical children's rhymes, or anything in between, I'm here to craft it with depth and literary flair. How shall we begin our creative journey today?",
             created_at: new Date().toISOString(),
           },
         ],
-        message_count: 1,
+        message_count: skipWelcome ? 0 : 1,
       };
 
+      console.log("Creating session with skipWelcome:", skipWelcome);
+      console.log("Session messages:", sessionWithMessages.messages);
       setSessions((prev) => [sessionWithMessages, ...prev]);
       setCurrentSessionId(newSession.id);
 
@@ -142,17 +145,90 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
     }
   };
 
-  const switchToSession = (sessionId: string) => {
-    setCurrentSessionId(sessionId);
-  };
+  const createSessionWithMessage = async (message: string, title?: string): Promise<string> => {
+    if (!isAuthenticated) {
+      throw new Error("Authentication required to create a session");
+    }
 
-  const sendMessage = async (content: string): Promise<void> => {
+    try {
+      console.log('Creating new session with message:', message);
+      
+      // Create the API session first
+      const newSession = await apiClient.createChatSession(
+        title || "New Conversation",
+        user?.primaryEmail || user?.email,
+        user?.displayName || user?.name || user?.primaryEmail
+      );
+      console.log('API session created with ID:', newSession.id);
+
+      // Set this as the current session immediately
+      setCurrentSessionId(newSession.id);
+
+      // Create session object with empty messages initially
+      const sessionWithMessages = {
+        ...newSession,
+        messages: [],
+        message_count: 0,
+      };
+
+      console.log("Adding new session to sessions list");
+      setSessions((prev) => [sessionWithMessages, ...prev]);
+
+      // Small delay to ensure state is updated
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Now send the message using the specific session ID
+      console.log('Sending message to new session:', newSession.id);
+      const response = await apiClient.sendMessage(newSession.id, message);
+      console.log('Message sent, got response:', response);
+
+      // Update the session with the actual messages from the API
+      setSessions((prev) =>
+        prev.map((session) => {
+          if (session.id === newSession.id) {
+            const updatedMessages = [
+              {
+                id: response.userMessage.id,
+                role: response.userMessage.role,
+                content: response.userMessage.content,
+                created_at: response.userMessage.created_at,
+              },
+              {
+                id: response.assistantMessage.id,
+                role: response.assistantMessage.role,
+                content: response.assistantMessage.content,
+                created_at: response.assistantMessage.created_at,
+                imageData: response.assistantMessage.imageData,
+              },
+            ];
+
+            return {
+              ...session,
+              messages: updatedMessages,
+              updated_at: new Date().toISOString(),
+              message_count: updatedMessages.length,
+            };
+          }
+          return session;
+        })
+      );
+
+      console.log('Session updated with messages, returning session ID:', newSession.id);
+      return newSession.id;
+    } catch (error) {
+      console.error("Error creating session with message:", error);
+      throw error;
+    }
+  }
+
+
+  const sendMessage = async (content: string, options?: { model?: string }): Promise<void> => {
     if (!currentSessionId || !isAuthenticated) {
       throw new Error("Authentication required to send messages");
     }
 
     try {
-      const response = await apiClient.sendMessage(currentSessionId, content);
+      const response = await apiClient.sendMessage(currentSessionId, content, options);
 
       // Update the current session with new messages
       setSessions((prev) =>
@@ -171,6 +247,7 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
                 role: response.assistantMessage.role,
                 content: response.assistantMessage.content,
                 created_at: response.assistantMessage.created_at,
+                imageData: response.assistantMessage.imageData,
               },
             ];
 
@@ -190,6 +267,13 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
     }
   };
 
+  const switchToSession = (sessionId: string) => {
+    console.log('Switching to session:', sessionId);
+    const session = sessions.find(s => s.id === sessionId);
+    console.log('Found session:', session);
+    setCurrentSessionId(sessionId);
+  };
+
   const updateSessionTitle = async (
     sessionId: string,
     title: string,
@@ -199,24 +283,11 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
 
       setSessions((prev) =>
         prev.map((session) =>
-          session.id === sessionId
-            ? { ...session, title, updated_at: new Date().toISOString() }
-            : session,
+          session.id === sessionId ? { ...session, title } : session,
         ),
       );
     } catch (error) {
       console.error("Error updating session title:", error);
-      throw error;
-    }
-  };
-
-  const clearAllSessions = async () => {
-    try {
-      await apiClient.clearAllSessions();
-      setSessions([]);
-      setCurrentSessionId(null);
-    } catch (error) {
-      console.error("Failed to clear all sessions:", error);
       throw error;
     }
   };
@@ -230,16 +301,25 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
       );
       setSessions(updatedSessions);
 
-      // If we're deleting the current session, switch to another or create new
       if (currentSessionId === sessionId) {
-        if (updatedSessions.length > 0) {
-          setCurrentSessionId(updatedSessions[0].id);
-        } else {
-          await createNewSession();
-        }
+        setCurrentSessionId(null);
       }
     } catch (error) {
-      console.error("Error deleting session:", error);
+      console.error("Failed to delete session:", error);
+      throw error;
+    }
+  };
+
+  const clearAllSessions = async (): Promise<void> => {
+    try {
+      await Promise.all(
+        sessions.map((session) => apiClient.deleteSession(session.id)),
+      );
+
+      setSessions([]);
+      setCurrentSessionId(null);
+    } catch (error) {
+      console.error("Failed to clear all sessions:", error);
       throw error;
     }
   };
@@ -247,25 +327,26 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   const currentSession =
     sessions.find((session) => session.id === currentSessionId) || null;
 
-  const value: ChatHistoryContextType = {
-    sessions,
-    currentSessionId,
-    currentSession,
-    isLoading,
-    authLoading,
-    isAuthenticated,
-    user,
-    createNewSession,
-    switchToSession,
-    sendMessage,
-    updateSessionTitle,
-    deleteSession,
-    clearAllSessions,
-    refreshSessions,
-  };
-
   return (
-    <ChatHistoryContext.Provider value={value}>
+    <ChatHistoryContext.Provider
+      value={{
+        sessions,
+        currentSessionId,
+        currentSession,
+        isLoading,
+        authLoading,
+        isAuthenticated,
+        user,
+        createNewSession,
+        createSessionWithMessage,
+        switchToSession,
+        sendMessage,
+        updateSessionTitle,
+        deleteSession,
+        clearAllSessions,
+        refreshSessions,
+      }}
+    >
       {children}
     </ChatHistoryContext.Provider>
   );

@@ -3,6 +3,12 @@ export interface ChatMessage {
   content: string;
   role: "user" | "assistant";
   created_at: string;
+  imageData?: {
+    base64?: string;
+    uint8Array?: Uint8Array;
+    mediaType?: string;
+    alt?: string;
+  };
 }
 
 export interface ChatSession {

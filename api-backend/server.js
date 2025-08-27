@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 // Import routes
 import authRoutes from "./routes/auth.js";
 import chatRoutes from "./routes/chat.js";
+import testRoutes from "./routes/test.js";
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +26,11 @@ app.use(
 // CORS configuration
 const allowedOrigins = [
   process.env.FRONTEND_URL || "http://localhost:5173",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "http://localhost:5176",
+  "http://localhost:5177",
   "http://localhost:8080",
   "http://127.0.0.1:8080",
   "http://localhost:8081",
@@ -95,6 +101,7 @@ app.get("/health", (req, res) => {
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/test", testRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {

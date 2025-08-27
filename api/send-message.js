@@ -1,6 +1,13 @@
 import OpenAI from "openai";
 import getPool from "./lib/database.js";
 import { authenticateToken } from "./lib/auth.js";
+import { detectImageGenerationRequest, extractImageDetails } from "./lib/gemini.js";
+import { generateImage } from "./lib/imagen.js";
+import { 
+  ENHANCED_SYSTEM_PROMPT, 
+  getOptimalSettings, 
+  optimizeResponse 
+} from "./lib/ai-optimizer.js";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -9,20 +16,25 @@ const openai = new OpenAI({
 
 const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
 
-// Helper function for Chat Completion API
-async function useChatCompletion(messages) {
+// Helper function for Chat Completion API with optimization
+async function useChatCompletion(messages, userPrompt = "") {
+  // Get optimal settings based on the prompt and context
+  const settings = getOptimalSettings(userPrompt, messages);
+  
+  // Use enhanced system prompt with any style-specific additions
   const systemMessage = {
     role: "system",
-    content: `You are Scriptor Umbra, an intelligent ghostwriting assistant specialized in articles, books, copywriting, and long-form content creation. 
-              You excel at crafting compelling narratives, persuasive copy, and engaging articles across various industries and formats.
-              Maintain a professional yet creative tone. Provide detailed, actionable guidance for content creation.`,
+    content: ENHANCED_SYSTEM_PROMPT + (settings.systemPromptAddition ? `\n\n${settings.systemPromptAddition}` : "")
   };
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [systemMessage, ...messages],
-    temperature: 0.7,
-    max_tokens: 2000,
+    model: settings.model || "gpt-4o",
+    messages: [systemMessage, ...settings.optimizedMessages],
+    temperature: settings.temperature,
+    max_tokens: settings.max_tokens,
+    top_p: settings.top_p,
+    frequency_penalty: settings.frequency_penalty,
+    presence_penalty: settings.presence_penalty,
   });
 
   const response = completion.choices[0]?.message?.content;
@@ -30,7 +42,8 @@ async function useChatCompletion(messages) {
     throw new Error("No response from OpenAI");
   }
 
-  return response;
+  // Optimize the response based on request type
+  return optimizeResponse(response, settings.requestType);
 }
 
 export default async function handler(req, res) {
@@ -127,18 +140,48 @@ export default async function handler(req, res) {
     console.log("📝 Message history length:", messages.length);
     
     let assistantResponse;
+    let responseMetadata = {};
+    
     try {
-      if (ASSISTANT_ID) {
-        console.log("🎯 Using Assistant API");
-        // For now, fallback to chat completion since assistant API is more complex
-        assistantResponse = await useChatCompletion(messages);
+      // Check if this is an image generation request
+      if (detectImageGenerationRequest(content)) {
+        console.log("🎨 Image generation request detected");
+        
+        // Extract the image details from the prompt
+        const imageSubject = extractImageDetails(content);
+        
+        try {
+          // Generate image using Gemini-enhanced prompts
+          const imageResult = await generateImage(imageSubject);
+          
+          // Format the response with the enhanced description
+          assistantResponse = `🎨 **Image Generation Request**\n\n**Your prompt:** "${imageSubject}"\n\n**Enhanced prompt:** "${imageResult.enhancedPrompt}"\n\n**Visualization:**\n${imageResult.description}\n\n---\n*Note: I've created a detailed description using Gemini AI. Actual image generation capabilities are in development.*`;
+          
+          // Add metadata to indicate this was an image request
+          responseMetadata = {
+            isImageRequest: true,
+            imageData: imageResult,
+          };
+          
+        } catch (imageError) {
+          console.error("❌ Image generation error:", imageError);
+          // Fallback to text description
+          assistantResponse = `I understand you'd like me to generate an image of "${imageSubject}". While I can't create actual images yet, I can describe what it would look like in vivid detail. Would you like me to provide a detailed description instead?`;
+        }
       } else {
-        console.log("💬 Using Chat Completion API");
-        assistantResponse = await useChatCompletion(messages);
+        // Regular text generation using OpenAI
+        if (ASSISTANT_ID) {
+          console.log("🎯 Using Assistant API");
+          // For now, fallback to chat completion since assistant API is more complex
+          assistantResponse = await useChatCompletion(messages, content);
+        } else {
+          console.log("💬 Using Chat Completion API");
+          assistantResponse = await useChatCompletion(messages, content);
+        }
       }
       console.log("✅ AI response generated successfully");
     } catch (aiError) {
-      console.error("❌ OpenAI API error:", aiError);
+      console.error("❌ AI API error:", aiError);
       console.error("Error details:", aiError.message);
       assistantResponse =
         "I apologize, but I'm experiencing technical difficulties. Please try again in a moment.";

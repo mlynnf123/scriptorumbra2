@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,7 +37,6 @@ import {
 import { stackClientApp } from "@/stack";
 import { useChatHistory } from "@/contexts/ChatHistoryContext";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 interface ChatHistorySidebarProps {
   isOpen: boolean;
@@ -57,23 +57,21 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     user,
     isAuthenticated,
   } = useChatHistory();
+  
+  const navigate = useNavigate();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
 
-  const handleNewChat = async () => {
-    try {
-      await createNewSession();
-      toast.success("New conversation started");
-      onClose();
-    } catch (error) {
-      toast.error("Failed to create new conversation");
-    }
+  const handleNewChat = () => {
+    navigate("/");
+    onClose();
   };
 
   const handleSessionClick = (sessionId: string) => {
     switchToSession(sessionId);
+    navigate(`/chat/${sessionId}`);
     onClose();
   };
 
@@ -86,9 +84,9 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     if (sessionToDelete) {
       try {
         await deleteSession(sessionToDelete);
-        toast.success("Conversation deleted");
+        console.log("Conversation deleted");
       } catch (error) {
-        toast.error("Failed to delete conversation");
+        console.error("Failed to delete conversation");
       }
       setSessionToDelete(null);
     }
@@ -101,7 +99,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
   const confirmClearAll = () => {
     clearAllSessions();
-    toast.success("All conversations cleared");
+    console.log("All conversations cleared");
     setClearAllDialogOpen(false);
     onClose();
   };
@@ -109,10 +107,10 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   const handleSignOut = async () => {
     try {
       await stackClientApp.signOut();
-      toast.success("Signed out successfully");
+      console.log("Signed out successfully");
       window.location.href = '/';
     } catch (error) {
-      toast.error("Failed to sign out");
+      console.error("Failed to sign out");
     }
   };
 
@@ -174,7 +172,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 onClick={onClose}
                 className="w-8 h-8 p-0 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               >
-                <X className="w-4 h-4" />
+                Close
               </Button>
             </div>
             <div className="flex items-center gap-3 mb-4">
@@ -185,7 +183,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                <p className="font-light text-slate-900 dark:text-slate-100 truncate">
                   {user?.displayName}
                 </p>
                 <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
@@ -195,16 +193,14 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
-                    <MoreVertical className="w-4 h-4" />
+                    Menu
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem>
-                    <Settings className="w-4 h-4 mr-2" />
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Crown className="w-4 h-4 mr-2" />
                     Upgrade Plan
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -212,7 +208,6 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     onClick={handleSignOut}
                     className="text-red-600"
                   >
-                    <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -223,7 +218,6 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               onClick={handleNewChat}
               className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700"
             >
-              <Plus className="w-4 h-4 mr-2" />
               New Conversation
             </Button>
           </div>
@@ -232,8 +226,7 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           <div className="flex-1 overflow-hidden">
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                  <History className="w-4 h-4" />
+                <h3 className="text-sm font-light text-slate-700 dark:text-slate-300 flex items-center gap-2">
                   Chat History
                 </h3>
                 {sessions.length > 0 && (
@@ -269,9 +262,8 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                           onClick={() => handleSessionClick(session.id)}
                         >
                           <div className="flex items-start gap-3">
-                            <MessageSquare className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">
+                              <p className="font-light text-sm text-slate-900 dark:text-slate-100 truncate">
                                 {session.title}
                               </p>
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
@@ -294,12 +286,11 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                                   className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <MoreVertical className="w-3 h-3" />
+                                  ...
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem>
-                                  <Edit2 className="w-4 h-4 mr-2" />
                                   Rename
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
@@ -309,7 +300,6 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                                   }}
                                   className="text-red-600"
                                 >
-                                  <Trash2 className="w-4 h-4 mr-2" />
                                   Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -321,7 +311,6 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 </ScrollArea>
               ) : (
                 <div className="text-center py-8">
-                  <MessageSquare className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     No conversations yet
                   </p>

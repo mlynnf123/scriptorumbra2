@@ -19,7 +19,15 @@ build/
 *.db
 *.sqlite
 
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Backend environment
+api-backend/.env
+
 # Temporary files
 tmp/
 temp/
-.env.local

@@ -3,6 +3,13 @@ import OpenAI from "openai";
 import pool from "../config/database.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { validate } from "../middleware/validation.js";
+import { 
+  ENHANCED_SYSTEM_PROMPT, 
+  getOptimalSettings, 
+  optimizeResponse 
+} from "../../api/lib/ai-optimizer.js";
+import { generateWithGemini, detectImageGenerationRequest, extractImageDetails } from "../../api/lib/gemini.js";
+import fetch from "node-fetch";
 
 const router = express.Router();
 
@@ -92,7 +99,7 @@ router.get("/sessions/:sessionId", authenticateToken, async (req, res) => {
 
     // Get messages for the session
     const messagesResult = await client.query(
-      `SELECT id, role, content, created_at 
+      `SELECT id, role, content, created_at, metadata 
        FROM chat_messages 
        WHERE session_id = $1 
        ORDER BY created_at ASC`,
@@ -101,7 +108,10 @@ router.get("/sessions/:sessionId", authenticateToken, async (req, res) => {
 
     const session = {
       ...sessionResult.rows[0],
-      messages: messagesResult.rows,
+      messages: messagesResult.rows.map(msg => ({
+        ...msg,
+        imageData: msg.metadata?.imageData || null
+      })),
     };
 
     res.json({
@@ -158,7 +168,7 @@ router.post("/sessions", authenticateToken, async (req, res) => {
       [
         session.id,
         "assistant",
-        "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
+        "Hello! I'm Scriptor Umbra, your versatile literary companion. I can channel the writing styles of legendary authors from Hemingway to Plath, from Shakespeare to Bukowski. Whether you need existential prose, whimsical children's rhymes, or anything in between, I'm here to craft it with depth and literary flair. How shall we begin our creative journey today?",
       ],
     );
 
@@ -220,7 +230,7 @@ router.post(
 
       // Get conversation history for context
       const historyResult = await client.query(
-        `SELECT role, content 
+        `SELECT role, content, metadata 
        FROM chat_messages 
        WHERE session_id = $1 
        ORDER BY created_at ASC`,
@@ -229,25 +239,112 @@ router.post(
 
       const messages = historyResult.rows;
 
-      // Generate AI response
+      // Check if this is an image generation request
+      if (detectImageGenerationRequest(content)) {
+        console.log("🎨 Image generation request detected");
+        
+        try {
+          const imageSubject = extractImageDetails(content);
+          
+          // Call the image generation API
+          const imageResponse = await fetch(`${req.protocol}://${req.get('host')}/api/generate-image`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': req.headers.authorization
+            },
+            body: JSON.stringify({
+              prompt: imageSubject,
+              size: "1024x1024",
+              style: "children",
+              quality: "standard"
+            })
+          });
+          
+          const imageResult = await imageResponse.json();
+          
+          if (imageResult.success && imageResult.data.type === 'generated') {
+            // Image was successfully generated
+            assistantResponse = `🎨 **Image Generated Successfully!**\n\n**Your prompt:** "${imageSubject}"\n\n**Enhanced prompt:** "${imageResult.data.enhancedPrompt}"\n\n[Image will be displayed below]\n\n**Description:**\n${imageResult.data.description}`;
+            
+            // Store the assistant response with image data
+            const assistantMessageResult = await client.query(
+              `INSERT INTO chat_messages (session_id, role, content, metadata) 
+               VALUES ($1, $2, $3, $4) 
+               RETURNING id, role, content, created_at, metadata`,
+              [
+                sessionId, 
+                "assistant", 
+                assistantResponse,
+                JSON.stringify({
+                  hasImage: true,
+                  imageData: imageResult.data.imageData
+                })
+              ],
+            );
+            
+            const assistantMessage = assistantMessageResult.rows[0];
+            
+            // Update session timestamp
+            await client.query(
+              "UPDATE chat_sessions SET updated_at = NOW() WHERE id = $1",
+              [sessionId],
+            );
+            
+            res.json({
+              success: true,
+              message: "Message sent successfully",
+              data: {
+                userMessage,
+                assistantMessage: {
+                  ...assistantMessage,
+                  imageData: imageResult.data.imageData
+                }
+              },
+            });
+            
+            return; // Early return for image generation
+          } else {
+            // Fall back to description-only mode
+            assistantResponse = `🎨 **Image Generation Request**\n\n**Your prompt:** "${imageSubject}"\n\n**Enhanced prompt:** "${imageResult.data.enhancedPrompt}"\n\n**Visualization:**\n${imageResult.data.description}\n\n---\n*Note: I've created a detailed description. The image generation service is currently unavailable.*`;
+          }
+        } catch (imageError) {
+          console.error("❌ Image generation error:", imageError);
+          // Continue with normal text response
+        }
+      }
+
+      // Generate AI response for non-image requests or if image generation failed
       console.log("🤖 Generating AI response with assistant ID:", ASSISTANT_ID);
       console.log("📝 Message history length:", messages.length);
       
       let assistantResponse;
-      try {
-        if (ASSISTANT_ID) {
-          console.log("🎯 Using Assistant API");
-          assistantResponse = await useAssistantAPI(messages);
-        } else {
-          console.log("💬 Using Chat Completion API");
-          assistantResponse = await useChatCompletion(messages);
+      if (!assistantResponse) { // Only generate if not already set by image generation
+        try {
+          if (ASSISTANT_ID) {
+            console.log("🎯 Using Assistant API");
+            assistantResponse = await useAssistantAPI(messages);
+          } else {
+            console.log("💬 Using Chat Completion API");
+            assistantResponse = await useChatCompletion(messages, content);
+          }
+          console.log("✅ AI response generated successfully");
+        } catch (aiError) {
+          console.error("❌ OpenAI API error:", aiError);
+          console.error("Error details:", aiError.message);
+          
+          // Try Gemini as fallback
+          console.log("🔄 Trying Gemini API as fallback...");
+          try {
+            const geminiPrompt = `${ENHANCED_SYSTEM_PROMPT}\n\nUser: ${content}`;
+            assistantResponse = await generateWithGemini(geminiPrompt);
+            console.log("✅ Gemini fallback successful");
+          } catch (geminiError) {
+            console.error("❌ Gemini fallback also failed:", geminiError);
+            assistantResponse =
+              "I apologize, but I'm experiencing technical difficulties. Please try again in a moment.";
+          }
         }
-        console.log("✅ AI response generated successfully");
-      } catch (aiError) {
-        console.error("❌ OpenAI API error:", aiError);
-        console.error("Error details:", aiError.message);
-        assistantResponse =
-          "I apologize, but I'm experiencing technical difficulties. Please try again in a moment.";
       }
 
       // Store assistant response
@@ -421,20 +518,25 @@ async function useAssistantAPI(messages) {
   }
 }
 
-// Helper function for Chat Completion API
-async function useChatCompletion(messages) {
+// Helper function for Chat Completion API with optimization
+async function useChatCompletion(messages, userPrompt = "") {
+  // Get optimal settings based on the prompt and context
+  const settings = getOptimalSettings(userPrompt, messages);
+  
+  // Use enhanced system prompt with any style-specific additions
   const systemMessage = {
     role: "system",
-    content: `You are Scriptor Umbra, an intelligent ghostwriting assistant specialized in articles, books, copywriting, and long-form content creation. 
-              You excel at crafting compelling narratives, persuasive copy, and engaging articles across various industries and formats.
-              Maintain a professional yet creative tone. Provide detailed, actionable guidance for content creation.`,
+    content: ENHANCED_SYSTEM_PROMPT + (settings.systemPromptAddition ? `\n\n${settings.systemPromptAddition}` : "")
   };
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [systemMessage, ...messages],
-    temperature: 0.7,
-    max_tokens: 2000,
+    model: settings.model || "gpt-4o",
+    messages: [systemMessage, ...settings.optimizedMessages],
+    temperature: settings.temperature,
+    max_tokens: settings.max_tokens,
+    top_p: settings.top_p,
+    frequency_penalty: settings.frequency_penalty,
+    presence_penalty: settings.presence_penalty,
   });
 
   const response = completion.choices[0]?.message?.content;
@@ -442,7 +544,8 @@ async function useChatCompletion(messages) {
     throw new Error("No response from OpenAI");
   }
 
-  return response;
+  // Optimize the response based on request type
+  return optimizeResponse(response, settings.requestType);
 }
 
 // Delete all chat sessions for the authenticated user

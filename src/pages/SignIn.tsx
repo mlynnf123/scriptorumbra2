@@ -5,9 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
 import { stackClientApp } from "@/stack";
-import { Sparkles } from "lucide-react";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -25,10 +23,10 @@ export default function SignIn() {
         email,
         password,
       });
-      toast.success("Signed in successfully!");
+      console.log("Signed in successfully!");
       navigate("/");
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign in");
+      console.error(error.message || "Failed to sign in");
     } finally {
       setIsLoading(false);
     }
@@ -44,10 +42,10 @@ export default function SignIn() {
         password,
         displayName: name,
       });
-      toast.success("Account created successfully!");
+      console.log("Account created successfully!");
       navigate("/");
     } catch (error: any) {
-      toast.error(error.message || "Failed to create account");
+      console.error(error.message || "Failed to create account");
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +62,7 @@ export default function SignIn() {
               className="w-16 h-16 rounded-2xl object-cover"
             />
           </div>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-light bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
             Scriptor Umbra
           </CardTitle>
           <CardDescription>

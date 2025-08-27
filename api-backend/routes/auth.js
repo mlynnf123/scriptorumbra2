@@ -63,7 +63,7 @@ router.post("/register", validate("register"), async (req, res) => {
       [
         sessionId,
         "assistant",
-        "Hello! I'm Scriptor Umbra, your intelligent ghostwriting assistant. I specialize in articles, books, copywriting, and long-form content creation. How can I help you craft exceptional content today?",
+        "Hello! I'm Scriptor Umbra, your versatile literary companion. I can channel the writing styles of legendary authors from Hemingway to Plath, from Shakespeare to Bukowski. Whether you need existential prose, whimsical children's rhymes, or anything in between, I'm here to craft it with depth and literary flair. How shall we begin our creative journey today?",
       ],
     );
 
@@ -154,7 +154,7 @@ router.post("/login", validate("login"), async (req, res) => {
         [
           sessionId,
           "assistant",
-          "Welcome back! I'm Scriptor Umbra, your intelligent ghostwriting assistant. How can I help you with your content creation today?",
+          "Welcome back! I'm Scriptor Umbra, your versatile literary companion. Ready to channel the voices of literary legends or craft original content in any style. What creative journey shall we embark on today?",
         ],
       );
     } else {

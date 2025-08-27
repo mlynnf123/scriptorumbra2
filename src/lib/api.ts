@@ -3,7 +3,7 @@ import { ChatSession } from '@/types/chat';
 import { stackClientApp } from '@/stack';
 
 const instance = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:3001/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -85,9 +85,13 @@ export const apiClient = {
     return response.data.data.session;
   },
 
-  sendMessage: async (sessionId: string, content: string) => {
-    const response = await instance.post(`/send-message`, { sessionId, content });
-    return response.data.data;
+  sendMessage: async (sessionId: string, content: string, options?: { model?: string }) => {
+    const payload = { 
+      content,
+      ...(options?.model && { model: options.model })
+    };
+    const response = await instance.post(`/chat/sessions/${sessionId}/messages`, payload);
+    return response.data.data; // Extract the nested data object
   },
 
   updateSessionTitle: async (sessionId: string, title: string) => {

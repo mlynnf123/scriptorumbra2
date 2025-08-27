@@ -24,7 +24,6 @@ import {
   FileText,
   Save,
 } from "lucide-react";
-import { toast } from "sonner";
 import { useChatHistory } from "@/contexts/ChatHistoryContext";
 
 export const SetupInstructions = () => {
@@ -36,7 +35,7 @@ export const SetupInstructions = () => {
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopied(label);
-    toast.success(`${label} copied to clipboard`);
+    console.log(`${label} copied to clipboard`);
     setTimeout(() => setCopied(null), 2000);
   };
 
@@ -57,10 +56,10 @@ export const SetupInstructions = () => {
   const saveApiKey = () => {
     if (apiKey.trim()) {
       // In a real app, this would save to backend/localStorage
-      toast.success("API key configuration saved (demo mode)");
+      console.log("API key configuration saved (demo mode)");
       setApiKey("");
     } else {
-      toast.error("Please enter a valid API key");
+      console.error("Please enter a valid API key");
     }
   };
 
@@ -74,7 +73,7 @@ export const SetupInstructions = () => {
             className="w-16 h-16 rounded-2xl object-cover"
           />
         </div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent mb-2">
+        <h1 className="text-3xl font-light bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent mb-2">
           Scriptor Umbra Settings
         </h1>
         <p className="text-slate-600 dark:text-slate-400">
@@ -106,12 +105,8 @@ export const SetupInstructions = () => {
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between p-3 rounded-lg border">
                 <div className="flex items-center gap-3">
-                  {hasApiKey ? (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 text-amber-500" />
-                  )}
-                  <span className="font-medium">OpenAI API Key</span>
+                  {hasApiKey ? "✓" : "!"}
+                  <span className="font-light">OpenAI API Key</span>
                 </div>
                 <Badge variant={hasApiKey ? "default" : "secondary"}>
                   {hasApiKey ? "Configured" : "Required"}
@@ -120,12 +115,8 @@ export const SetupInstructions = () => {
 
               <div className="flex items-center justify-between p-3 rounded-lg border">
                 <div className="flex items-center gap-3">
-                  {hasAssistantId ? (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 text-amber-500" />
-                  )}
-                  <span className="font-medium">Assistant ID</span>
+                  {hasAssistantId ? "✓" : "!"}
+                  <span className="font-light">Assistant ID</span>
                 </div>
                 <Badge variant={hasAssistantId ? "default" : "outline"}>
                   {hasAssistantId ? "Configured" : "Optional"}
@@ -192,46 +183,6 @@ export const SetupInstructions = () => {
             </CardContent>
           </Card>
 
-          {/* Learn More About OpenAI */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Learn More About OpenAI</CardTitle>
-              <CardDescription>
-                Explore the platform behind Scriptor Umbra's AI capabilities
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Scriptor Umbra is powered by OpenAI's GPT-4 model, providing state-of-the-art 
-                  natural language processing for all your ghostwriting needs.
-                </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      window.open("https://platform.openai.com", "_blank")
-                    }
-                    className="w-full"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Visit OpenAI Platform
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      window.open("https://openai.com/gpt-4", "_blank")
-                    }
-                    className="w-full"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Learn About GPT-4
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* AI Model Information */}
           <Card>
@@ -245,7 +196,7 @@ export const SetupInstructions = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                   <div>
-                    <h4 className="font-medium text-slate-900 dark:text-slate-100">Current Model</h4>
+                    <h4 className="font-light text-slate-900 dark:text-slate-100">Current Model</h4>
                     <p className="text-sm text-slate-600 dark:text-slate-400">GPT-4 (OpenAI)</p>
                   </div>
                   <Badge variant="default" className="bg-gradient-to-r from-sky-500 to-blue-600">
@@ -254,7 +205,7 @@ export const SetupInstructions = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <h4 className="font-medium text-slate-900 dark:text-slate-100">Capabilities</h4>
+                  <h4 className="font-light text-slate-900 dark:text-slate-100">Capabilities</h4>
                   <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
                     <li>• Advanced content generation and editing</li>
                     <li>• Multiple writing styles and tones</li>
@@ -269,8 +220,7 @@ export const SetupInstructions = () => {
 
           {hasApiKey && (
             <div className="text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 rounded-lg">
-                <CheckCircle className="w-5 h-5" />
+              <div className="inline-flex items-center gap-2 px-4 py-2 border rounded-lg">
                 <span className="font-medium">
                   Setup Complete! You can now chat with Scriptor Umbra.
                 </span>
@@ -297,7 +247,7 @@ export const SetupInstructions = () => {
                   {user?.displayName?.[0] || 'U'}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                  <h3 className="font-light text-slate-900 dark:text-slate-100">
                     {user?.displayName || 'User'}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -351,7 +301,7 @@ export const SetupInstructions = () => {
                   size="sm"
                   onClick={() => {
                     setLogs([...logs, `[${new Date().toLocaleString()}] Log refreshed manually`]);
-                    toast.success("Logs refreshed");
+                    console.log("Logs refreshed");
                   }}
                 >
                   Refresh
