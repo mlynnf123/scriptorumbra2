@@ -6,4 +6,5 @@ export const stackClientApp = new StackClientApp({
   publishableClientKey: import.meta.env.VITE_STACK_PUBLISHABLE_CLIENT_KEY,
   tokenStore: 'cookie',
   redirectMethod: { useNavigate },
+  baseUrl: import.meta.env.PROD ? 'https://scriptorumbra2-mlynnf123s-projects.vercel.app' : undefined,
 });

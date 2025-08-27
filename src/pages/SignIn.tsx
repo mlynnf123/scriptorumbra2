@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { stackClientApp } from "@/stack";
 
 export default function SignIn() {
@@ -13,20 +14,44 @@ export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  // Check if user is already signed in
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = stackClientApp.getUser();
+        if (user) {
+          console.log("User already signed in, redirecting...");
+          navigate("/");
+        }
+      } catch (error) {
+        // User not signed in, continue with signin page
+        console.log("User not signed in");
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
+    setSuccess("");
 
     try {
       await stackClientApp.signInWithCredential({
         email,
         password,
       });
+      setSuccess("Signed in successfully! Redirecting...");
       console.log("Signed in successfully!");
-      navigate("/");
+      setTimeout(() => navigate("/"), 1000);
     } catch (error: any) {
-      console.error(error.message || "Failed to sign in");
+      const errorMessage = error.message || "Failed to sign in. Please check your credentials.";
+      setError(errorMessage);
+      console.error("Sign in error:", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -35,17 +60,27 @@ export default function SignIn() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
+    setSuccess("");
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       await stackClientApp.signUpWithCredential({
         email,
         password,
-        displayName: name,
       });
+      setSuccess("Account created successfully! Redirecting...");
       console.log("Account created successfully!");
-      navigate("/");
+      setTimeout(() => navigate("/"), 1000);
     } catch (error: any) {
-      console.error(error.message || "Failed to create account");
+      const errorMessage = error.message || "Failed to create account. Please try again.";
+      setError(errorMessage);
+      console.error("Sign up error:", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -70,6 +105,16 @@ export default function SignIn() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {success && (
+            <Alert className="mb-4 border-green-200 bg-green-50 text-green-800">
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -104,6 +149,37 @@ export default function SignIn() {
                   disabled={isLoading}
                 >
                   {isLoading ? "Signing in..." : "Sign In"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={async () => {
+                    try {
+                      // For testing/demo - create a test account
+                      await stackClientApp.signUpWithCredential({
+                        email: "demo@example.com",
+                        password: "demo123",
+                      });
+                      setSuccess("Demo account created! Redirecting...");
+                      setTimeout(() => navigate("/"), 1000);
+                    } catch (error) {
+                      // If account exists, try signing in
+                      try {
+                        await stackClientApp.signInWithCredential({
+                          email: "demo@example.com",
+                          password: "demo123",
+                        });
+                        setSuccess("Signed in as demo user! Redirecting...");
+                        setTimeout(() => navigate("/"), 1000);
+                      } catch (signInError: any) {
+                        setError("Demo authentication failed");
+                      }
+                    }
+                  }}
+                  disabled={isLoading}
+                >
+                  Try Demo Account
                 </Button>
               </form>
             </TabsContent>
