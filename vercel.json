@@ -24,7 +24,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "X-Requested-With, Content-Type, Authorization"
+          "value": "X-Requested-With, Content-Type, Authorization, x-stack-random-nonce, x-stack-project-id, x-stack-access-type, x-stack-client-version"
         }
       ]
     }
