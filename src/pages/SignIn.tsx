@@ -32,15 +32,25 @@ export default function SignIn() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    console.log("Attempting signin with:", { email, hasPassword: !!password });
 
     try {
-      await stackClientApp.signInWithCredential({
+      const result = await stackClientApp.signInWithCredential({
         email,
         password,
       });
+      console.log("Sign in successful:", result);
       navigate("/");
     } catch (error: any) {
-      console.error("Sign in error:", error.message || "Failed to sign in");
+      console.error("Sign in error:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        statusCode: error.statusCode,
+        details: error.details
+      });
+      alert(`Sign in failed: ${error.message || "Unknown error"}`);
     } finally {
       setIsLoading(false);
     }
@@ -49,15 +59,25 @@ export default function SignIn() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    console.log("Attempting signup with:", { email, name, hasPassword: !!password });
 
     try {
-      await stackClientApp.signUpWithCredential({
+      const result = await stackClientApp.signUpWithCredential({
         email,
         password,
       });
+      console.log("Sign up successful:", result);
       navigate("/");
     } catch (error: any) {
-      console.error("Sign up error:", error.message || "Failed to create account");
+      console.error("Sign up error:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        statusCode: error.statusCode,
+        details: error.details
+      });
+      alert(`Sign up failed: ${error.message || "Unknown error"}`);
     } finally {
       setIsLoading(false);
     }
