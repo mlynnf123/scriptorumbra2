@@ -104,6 +104,23 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // Check required environment variables
+  if (!process.env.OPENAI_API_KEY) {
+    console.error("Missing OPENAI_API_KEY environment variable");
+    return res.status(500).json({
+      success: false,
+      message: "Server configuration error: Missing OpenAI API key"
+    });
+  }
+
+  if (!process.env.DATABASE_URL) {
+    console.error("Missing DATABASE_URL environment variable");
+    return res.status(500).json({
+      success: false,
+      message: "Server configuration error: Missing database configuration"
+    });
+  }
+
   // Authentication middleware
   try {
     await new Promise((resolve, reject) => {
