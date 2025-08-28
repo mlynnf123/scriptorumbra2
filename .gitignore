@@ -31,3 +31,6 @@ api-backend/.env
 # Temporary files
 tmp/
 temp/
+.env
+.env.production
+api-backend/.env

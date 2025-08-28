@@ -13,13 +13,17 @@ export const authenticateToken = async (req, res, next) => {
   }
 
   try {
+    console.log("🔐 Auth: Attempting to decode token");
+    
     // Try to decode the token to extract user info
     // Stack tokens are JWTs, so we can decode them to get user data
     const decoded = jwt.decode(token, { complete: true });
+    console.log("🔍 Auth: Token decoded successfully:", !!decoded);
     
     if (decoded && decoded.payload) {
       // Extract user info from Stack token
       const payload = decoded.payload;
+      console.log("📝 Auth: Token payload received, user ID:", payload.sub);
       
       // Create a consistent user object for the API
       req.user = {
@@ -28,6 +32,7 @@ export const authenticateToken = async (req, res, next) => {
         name: 'Stack User', // We'll get the real name from the frontend user object if needed
       };
       
+      console.log("✅ Auth: User object created for:", req.user.id);
       return next();
     }
 
@@ -56,7 +61,8 @@ export const authenticateToken = async (req, res, next) => {
       client.release();
     }
   } catch (error) {
-    console.error("Auth error:", error);
+    console.error("❌ Auth: Authentication error:", error.message);
+    console.error("❌ Auth: Full error details:", error);
     
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
@@ -68,6 +74,7 @@ export const authenticateToken = async (req, res, next) => {
     return res.status(403).json({
       success: false,
       message: "Invalid token",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

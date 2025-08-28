@@ -113,4 +113,34 @@ router.get("/db", async (req, res) => {
   }
 });
 
+// Debug endpoint to check users in database
+router.get("/users", async (req, res) => {
+  try {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        "SELECT id, email, name, created_at FROM users ORDER BY created_at DESC"
+      );
+      
+      res.json({
+        success: true,
+        message: "Users retrieved successfully",
+        data: {
+          count: result.rows.length,
+          users: result.rows
+        }
+      });
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+      error: error.message
+    });
+  }
+});
+
 export default router;
