@@ -92,7 +92,7 @@ export const apiClient = {
       content,
       ...(options?.model && { model: options.model })
     };
-    const response = await instance.post(`/messages/${sessionId}`, payload);
+    const response = await instance.post(`/send-message`, { sessionId, ...payload });
     return response.data.data; // Extract the nested data object
   },
 
