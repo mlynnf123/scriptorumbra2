@@ -31,7 +31,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import { SetupInstructions } from "@/components/SetupInstructions";
 import { stackClientApp } from "@/stack";
 import { useChatHistory } from "@/contexts/ChatHistoryContext";
 import ChatHistorySidebar from "@/components/ChatHistorySidebar";
@@ -218,7 +217,6 @@ const Index = () => {
             </Button>
           </div>
         )}
-        <SetupInstructions />
       </div>
     );
   }

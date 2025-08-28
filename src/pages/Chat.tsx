@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
-import { SetupInstructions } from "@/components/SetupInstructions";
 import { stackClientApp } from "@/stack";
 import { useChatHistory } from "@/contexts/ChatHistoryContext";
 import ChatHistorySidebar from "@/components/ChatHistorySidebar";
@@ -373,7 +372,6 @@ Based on current web results, provide comprehensive information about this topic
             </Button>
           </div>
         )}
-        <SetupInstructions />
       </div>
     );
   }

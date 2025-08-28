@@ -5,7 +5,25 @@ const config: CapacitorConfig = {
   appName: 'Scriptor Umbra',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    // Allow CORS for production API
+    allowNavigation: ['scriptorumbra2.vercel.app']
+  },
+  ios: {
+    contentInset: 'automatic',
+    scrollEnabled: true,
+    backgroundColor: '#ffffff'
+  },
+  plugins: {
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+      resizeOnFullScreen: true
+    },
+    StatusBar: {
+      style: 'default',
+      backgroundColor: '#ffffff'
+    }
   }
 };
 
