@@ -655,12 +655,6 @@ Based on current web results, provide comprehensive information about this topic
               <PromptInputSubmit
                 disabled={!inputValue.trim() || isLoading || chatLoading}
                 status={isLoading || chatLoading ? 'submitted' : undefined}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (inputValue.trim() && !isLoading && !chatLoading) {
-                    handleSendMessage();
-                  }
-                }}
               />
             </PromptInputToolbar>
           </PromptInput>
