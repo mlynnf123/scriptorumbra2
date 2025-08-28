@@ -144,19 +144,19 @@ export default async function handler(req, res) {
       try {
         const { title = "New Conversation" } = req.body;
 
-        // Get real user info from request body if provided, otherwise use defaults
-        const realEmail = req.body.userEmail || req.user.email;
-        const realName = req.body.userName || req.user.name;
+        // Get real user info from request body if provided, otherwise use auth token data
+        const userEmail = req.body.userEmail || `${req.user.id}@stack-auth.local`;
+        const userName = req.body.userName || req.user.name || 'User';
 
-        // First, ensure the user exists in our database (upsert)
+        // Simple upsert - each Stack Auth user gets their own database record
+        // No need to match by email since Stack Auth handles user identity
         await client.query(
           `INSERT INTO users (id, email, name) 
            VALUES ($1, $2, $3) 
            ON CONFLICT (id) DO UPDATE SET 
-             email = EXCLUDED.email,
              name = EXCLUDED.name,
              updated_at = NOW()`,
-          [req.user.id, realEmail, realName],
+          [req.user.id, userEmail, userName],
         );
 
         const result = await client.query(
