@@ -7,7 +7,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
+// Note: We use Chat Completion API with hardcoded system prompt instead of Assistant API
 
 // Helper function for Chat Completion API
 async function useChatCompletion(messages) {
@@ -37,62 +37,7 @@ You should ask clarifying questions if the user's request is ambiguous (e.g., "D
   return response;
 }
 
-// Helper function for Assistant API
-async function useAssistantAPI(messages) {
-  // Create thread
-  const thread = await openai.beta.threads.create();
-
-  // Add the latest user message
-  const lastUserMessage = messages.filter((m) => m.role === "user").pop();
-  if (!lastUserMessage) {
-    throw new Error("No user message found");
-  }
-
-  await openai.beta.threads.messages.create(thread.id, {
-    role: "user",
-    content: lastUserMessage.content,
-  });
-
-  // Run assistant
-  const run = await openai.beta.threads.runs.create(thread.id, {
-    assistant_id: ASSISTANT_ID,
-  });
-
-  // Wait for completion
-  let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-  let attempts = 0;
-  const maxAttempts = 60;
-
-  while (
-    (runStatus.status === "queued" || runStatus.status === "in_progress") &&
-    attempts < maxAttempts
-  ) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-    attempts++;
-  }
-
-  if (runStatus.status !== "completed") {
-    throw new Error(`Assistant run failed with status: ${runStatus.status}`);
-  }
-
-  // Get response
-  const messagesResponse = await openai.beta.threads.messages.list(thread.id);
-  const assistantMessage = messagesResponse.data
-    .filter((message) => message.role === "assistant")
-    .sort((a, b) => b.created_at - a.created_at)[0];
-
-  if (!assistantMessage || !assistantMessage.content[0]) {
-    throw new Error("No response from assistant");
-  }
-
-  const content = assistantMessage.content[0];
-  if (content.type === "text") {
-    return content.text.value;
-  } else {
-    throw new Error("Unexpected response type from assistant");
-  }
-}
+// Assistant API function removed - we now use Chat Completion API exclusively
 
 export default async function handler(req, res) {
   // Set CORS headers

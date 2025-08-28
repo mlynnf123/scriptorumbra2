@@ -11,12 +11,12 @@ export default async function handler(req, res) {
   try {
     const envStatus = {
       OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
-      OPENAI_ASSISTANT_ID: !!process.env.OPENAI_ASSISTANT_ID,
       DATABASE_URL: !!process.env.DATABASE_URL,
       JWT_SECRET: !!process.env.JWT_SECRET,
       GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
       STACK_SECRET_SERVER_KEY: !!process.env.STACK_SECRET_SERVER_KEY,
       NODE_ENV: process.env.NODE_ENV,
+      NOTE: "Using Chat Completion API instead of Assistant API"
     };
 
     res.json({
