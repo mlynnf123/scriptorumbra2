@@ -40,6 +40,8 @@ You should ask clarifying questions if the user's request is ambiguous (e.g., "D
 // Assistant API function removed - we now use Chat Completion API exclusively
 
 export default async function handler(req, res) {
+  console.log(`📨 Messages endpoint called - Method: ${req.method}, SessionID: ${req.query.sessionId}`);
+  
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
