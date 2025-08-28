@@ -480,9 +480,9 @@ Based on current web results, provide comprehensive information about this topic
       </header>
 
       {/* Main Chat Interface */}
-      <div className="max-w-4xl mx-auto p-3 sm:p-4 h-[calc(100vh-70px)] sm:h-[calc(100vh-80px)] flex flex-col">
+      <div className="max-w-4xl mx-auto p-2 sm:p-4 h-[calc(100vh-60px)] sm:h-[calc(100vh-80px)] flex flex-col">
         {/* Messages */}
-        <ScrollArea ref={scrollAreaRef} className="flex-1 pr-2 sm:pr-4">
+        <ScrollArea ref={scrollAreaRef} className="flex-1 pr-1 sm:pr-4">
           <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-4">
@@ -492,10 +492,10 @@ Based on current web results, provide comprehensive information about this topic
                     alt="Scriptor Umbra Logo" 
                     className="w-20 h-20 mx-auto mb-4 rounded-2xl shadow-lg"
                   />
-                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white mb-2">
                     Welcome to Scriptor Umbra
                   </h2>
-                  <p className="text-slate-600 dark:text-slate-400 max-w-md">
+                  <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-md px-4">
                     I can channel the writing styles of legendary authors and craft any form of literary content.
                   </p>
                 </div>
@@ -533,7 +533,7 @@ Based on current web results, provide comprehensive information about this topic
 
                 <div
                   className={cn(
-                    "flex flex-col max-w-[80%]",
+                    "flex flex-col max-w-[85%] sm:max-w-[80%]",
                     message.role === "user" ? "items-end" : "items-start",
                   )}
                 >
@@ -557,11 +557,11 @@ Based on current web results, provide comprehensive information about this topic
                         : "bg-white dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50",
                     )}
                   >
-                    <CardContent className="p-4">
+                    <CardContent className="p-3 sm:p-4">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 space-y-3">
                           {/* Text content */}
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                          <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">
                             {message.content}
                           </p>
                           
@@ -617,7 +617,7 @@ Based on current web results, provide comprehensive information about this topic
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t border-slate-200/60 dark:border-slate-800/60 pt-4 mt-4">
+        <div className="border-t border-slate-200/60 dark:border-slate-800/60 pt-3 mt-3 sm:pt-4 sm:mt-4">
           <PromptInput 
             onSubmit={handleSendMessage} 
             className="relative"

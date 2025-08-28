@@ -94,10 +94,10 @@ export default function SignIn() {
               className="w-16 h-16 rounded-2xl object-cover"
             />
           </div>
-          <CardTitle className="text-2xl font-light bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+          <CardTitle className="text-xl sm:text-2xl font-light bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
             Scriptor Umbra
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm sm:text-base">
             Sign in to access your intelligent ghostwriting assistant
           </CardDescription>
         </CardHeader>

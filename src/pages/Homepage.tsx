@@ -320,8 +320,8 @@ Based on current web results, provide comprehensive information about this topic
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
-        <div className="text-center space-y-8">
+      <main className="container mx-auto px-4 py-6 sm:py-12 max-w-4xl">
+        <div className="text-center space-y-6 sm:space-y-8">
           {/* Logo and Title */}
           <div className="space-y-4">
             <div className="relative mx-auto w-fit">
@@ -333,10 +333,10 @@ Based on current web results, provide comprehensive information about this topic
               <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white dark:border-slate-950 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-4xl font-light mb-2 bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-light mb-2 bg-gradient-to-r from-slate-900 via-blue-600 to-indigo-600 dark:from-white dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
                 Welcome back, {user?.displayName?.split(' ')[0] || 'Writer'}
               </h1>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
                 What would you like to create today?
               </p>
             </div>
@@ -344,8 +344,8 @@ Based on current web results, provide comprehensive information about this topic
 
           {/* Suggested Prompts */}
           <div className="space-y-4">
-            <h2 className="text-lg font-light text-left">Try these prompts</h2>
-            <Suggestions className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <h2 className="text-base sm:text-lg font-light text-left">Try these prompts</h2>
+            <Suggestions className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Suggestion 
                 suggestion="Write a poem in the style of Sylvia Plath"
                 onClick={handleSuggestionClick}
@@ -454,8 +454,8 @@ Based on current web results, provide comprehensive information about this topic
                 ))}
               </div>
             )}
-            <p className="text-sm text-muted-foreground">
-              Press Cmd/Ctrl + Enter to send, or click a suggestion above
+            <p className="text-xs sm:text-sm text-muted-foreground px-2">
+              Press Enter to send, or click a suggestion above
             </p>
           </div>
         </div>

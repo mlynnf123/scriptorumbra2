@@ -3,7 +3,9 @@ import { ChatSession } from '@/types/chat';
 import { stackClientApp } from '@/stack';
 
 const instance = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: import.meta.env.PROD 
+    ? '/api'  // In production, use relative path for Vercel functions
+    : 'http://localhost:3001/api', // In development, use local backend
   headers: {
     'Content-Type': 'application/json',
   },
