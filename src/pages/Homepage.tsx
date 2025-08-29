@@ -281,6 +281,18 @@ Based on current web results, provide comprehensive information about this topic
                 Settings
               </AvatarDropdownItem>
               <AvatarDropdownSeparator />
+              {Capacitor.isNativePlatform() && (
+                <AvatarDropdownItem
+                  onClick={() => {
+                    StackAuthNative.forceSignOut();
+                    window.location.reload();
+                  }}
+                  className="text-orange-600 hover:text-orange-600"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Force Clear Auth
+                </AvatarDropdownItem>
+              )}
               <AvatarDropdownItem
                 onClick={async () => {
                   try {

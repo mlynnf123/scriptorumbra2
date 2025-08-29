@@ -206,4 +206,13 @@ export class StackAuthNative {
   static isAuthenticated(): boolean {
     return !!localStorage.getItem('stack-native-access-token');
   }
+
+  // Force clear all authentication data (for debugging)
+  static forceSignOut(): void {
+    console.log('🧹 Force clearing all auth data...');
+    localStorage.removeItem('stack-native-access-token');
+    localStorage.removeItem('stack-native-refresh-token');
+    localStorage.removeItem('stack-native-user');
+    console.log('✅ All auth data cleared');
+  }
 }
