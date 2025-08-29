@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Feather } from "lucide-react";
 import { Capacitor } from "@capacitor/core";

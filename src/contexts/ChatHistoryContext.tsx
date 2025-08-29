@@ -188,24 +188,47 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
       
       // BYPASS API CLIENT - Direct fetch to debug endpoint
       console.log('🚨 BYPASSING API CLIENT - Using direct fetch to debug endpoint');
-      const response = await fetch('https://scriptorumbra2.vercel.app/api/chat/sessions-debug', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
-          // Removing auth header for now to test
-        },
-        body: JSON.stringify({
-          title: title || "New Conversation",
-          userEmail: user?.primaryEmail || user?.email || 'test@test.com',
-          userName: user?.displayName || user?.name || 'Test User'
-        })
-      });
       
-      console.log('🚨 Direct fetch response status:', response.status);
-      const data = await response.json();
-      console.log('🚨 Direct fetch response data:', data);
+      const requestBody = {
+        title: title || "New Conversation",
+        userEmail: user?.primaryEmail || user?.email || 'test@test.com',
+        userName: user?.displayName || user?.name || 'Test User'
+      };
+      
+      console.log('🚨 Request body:', JSON.stringify(requestBody));
+      
+      let response, data;
+      try {
+        response = await fetch('https://scriptorumbra2.vercel.app/api/chat/sessions-debug', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json'
+            // Removing auth header for now to test
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        console.log('🚨 Direct fetch response status:', response.status);
+        console.log('🚨 Response headers:', Object.fromEntries(response.headers.entries()));
+        
+        const responseText = await response.text();
+        console.log('🚨 Raw response text:', responseText);
+        
+        try {
+          data = JSON.parse(responseText);
+          console.log('🚨 Parsed response data:', data);
+        } catch (parseError) {
+          console.log('🚨 Failed to parse response as JSON:', parseError);
+          throw new Error(`Invalid JSON response: ${responseText}`);
+        }
+        
+      } catch (fetchError) {
+        console.log('🚨 Fetch error:', fetchError);
+        throw new Error(`Network error: ${fetchError.message}`);
+      }
       
       if (!response.ok) {
+        console.log('🚨 HTTP Error - Status:', response.status, 'Data:', data);
         throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
       }
       
