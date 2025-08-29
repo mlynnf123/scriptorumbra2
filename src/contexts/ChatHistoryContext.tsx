@@ -186,12 +186,30 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
     try {
       console.log('Creating new session with message:', message);
       
-      // Create the API session first
-      const newSession = await apiClient.createChatSession(
-        title || "New Conversation",
-        user?.primaryEmail || user?.email,
-        user?.displayName || user?.name || user?.primaryEmail
-      );
+      // BYPASS API CLIENT - Direct fetch to debug endpoint
+      console.log('🚨 BYPASSING API CLIENT - Using direct fetch to debug endpoint');
+      const response = await fetch('https://scriptorumbra2.vercel.app/api/chat/sessions-debug', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json'
+          // Removing auth header for now to test
+        },
+        body: JSON.stringify({
+          title: title || "New Conversation",
+          userEmail: user?.primaryEmail || user?.email || 'test@test.com',
+          userName: user?.displayName || user?.name || 'Test User'
+        })
+      });
+      
+      console.log('🚨 Direct fetch response status:', response.status);
+      const data = await response.json();
+      console.log('🚨 Direct fetch response data:', data);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
+      }
+      
+      const newSession = data.data.session;
       console.log('API session created with ID:', newSession.id);
 
       // Set this as the current session immediately
@@ -212,8 +230,8 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
 
       // Now send the message using the specific session ID
       console.log('Sending message to new session:', newSession.id);
-      const response = await apiClient.sendMessage(newSession.id, message);
-      console.log('Message sent, got response:', response);
+      const messageResponse = await apiClient.sendMessage(newSession.id, message);
+      console.log('Message sent, got response:', messageResponse);
 
       // Update the session with the actual messages from the API
       setSessions((prev) =>
@@ -221,17 +239,17 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
           if (session.id === newSession.id) {
             const updatedMessages = [
               {
-                id: response.userMessage.id,
-                role: response.userMessage.role,
-                content: response.userMessage.content,
-                created_at: response.userMessage.created_at,
+                id: messageResponse.userMessage.id,
+                role: messageResponse.userMessage.role,
+                content: messageResponse.userMessage.content,
+                created_at: messageResponse.userMessage.created_at,
               },
               {
-                id: response.assistantMessage.id,
-                role: response.assistantMessage.role,
-                content: response.assistantMessage.content,
-                created_at: response.assistantMessage.created_at,
-                imageData: response.assistantMessage.imageData,
+                id: messageResponse.assistantMessage.id,
+                role: messageResponse.assistantMessage.role,
+                content: messageResponse.assistantMessage.content,
+                created_at: messageResponse.assistantMessage.created_at,
+                imageData: messageResponse.assistantMessage.imageData,
               },
             ];
 
@@ -273,17 +291,17 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
             const updatedMessages = [
               ...session.messages,
               {
-                id: response.userMessage.id,
-                role: response.userMessage.role,
-                content: response.userMessage.content,
-                created_at: response.userMessage.created_at,
+                id: messageResponse.userMessage.id,
+                role: messageResponse.userMessage.role,
+                content: messageResponse.userMessage.content,
+                created_at: messageResponse.userMessage.created_at,
               },
               {
-                id: response.assistantMessage.id,
-                role: response.assistantMessage.role,
-                content: response.assistantMessage.content,
-                created_at: response.assistantMessage.created_at,
-                imageData: response.assistantMessage.imageData,
+                id: messageResponse.assistantMessage.id,
+                role: messageResponse.assistantMessage.role,
+                content: messageResponse.assistantMessage.content,
+                created_at: messageResponse.assistantMessage.created_at,
+                imageData: messageResponse.assistantMessage.imageData,
               },
             ];
 
