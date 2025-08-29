@@ -262,171 +262,169 @@ Based on current web results, provide comprehensive information about this topic
             </div>
           </div>
 
-          <div 
-            className="flex items-center space-x-3"
-            style={{
-              position: 'relative',
-              zIndex: 1000,
-              touchAction: 'manipulation'
-            }}
-          >
+          <div className="flex items-center space-x-3">
             {Capacitor.isNativePlatform() ? (
-              <button
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  setTheme(theme === "dark" ? "light" : "dark");
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md touch-manipulation"
+              <div 
+                className="flex gap-3 items-center"
                 style={{
-                  WebkitTapHighlightColor: 'transparent',
-                  WebkitTouchCallout: 'none',
-                  minHeight: '44px',
-                  minWidth: '44px'
+                  position: 'fixed',
+                  right: '16px',
+                  top: '16px',
+                  zIndex: 9999,
+                  background: 'rgba(255,255,255,0.95)',
+                  backdropFilter: 'blur(10px)',
+                  padding: '8px',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                 }}
               >
-                {theme === "dark" ? (
-                  <Sun className="h-4 w-4" />
-                ) : (
-                  <Moon className="h-4 w-4" />
-                )}
-              </button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              >
-                {theme === "dark" ? (
-                  <Sun className="h-4 w-4" />
-                ) : (
-                  <Moon className="h-4 w-4" />
-                )}
-              </Button>
-            )}
-
-            {Capacitor.isNativePlatform() ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={async () => {
-                    console.log('API Test button clicked!');
-                    try {
-                      const response = await fetch('/api/test-simple', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ test: 'API call from iOS' })
-                      });
-                      const data = await response.json();
-                      console.log('API response:', data);
-                      alert(`API works! ${data.message}`);
-                    } catch (error) {
-                      console.error('API error:', error);
-                      alert(`API failed: ${error.message}`);
-                    }
-                  }}
-                  onTouchEnd={async (e) => {
+                {/* Theme Toggle */}
+                <div
+                  onTouchStart={(e) => {
                     e.preventDefault();
-                    console.log('API Test touched!');
+                    console.log('Theme touch start');
+                    setTheme(theme === "dark" ? "light" : "dark");
+                  }}
+                  className="p-3 bg-gray-200 hover:bg-gray-300 rounded-full cursor-pointer"
+                  style={{
+                    WebkitTapHighlightColor: 'transparent',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none',
+                    minHeight: '44px',
+                    minWidth: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {theme === "dark" ? (
+                    <Sun className="h-5 w-5" style={{ pointerEvents: 'none' }} />
+                  ) : (
+                    <Moon className="h-5 w-5" style={{ pointerEvents: 'none' }} />
+                  )}
+                </div>
+
+                {/* API Test Button */}
+                <div
+                  onTouchStart={async (e) => {
+                    e.preventDefault();
+                    console.log('API test touch start');
                     try {
                       const response = await fetch('https://scriptorumbra2.vercel.app/api/test-simple', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ test: 'API call from iOS touch' })
+                        body: JSON.stringify({ test: 'Touch test from iOS' })
                       });
                       const data = await response.json();
                       console.log('API response:', data);
-                      alert(`API works! ${data.message}`);
+                      alert(`API Success: ${data.message}`);
                     } catch (error) {
                       console.error('API error:', error);
-                      alert(`API failed: ${error.message}`);
+                      alert(`API Failed: ${error.message}`);
                     }
                   }}
-                  className="px-3 py-1 bg-blue-500 text-white rounded text-sm touch-manipulation"
+                  className="px-3 py-2 bg-blue-500 text-white rounded-full cursor-pointer text-sm font-medium"
                   style={{
                     WebkitTapHighlightColor: 'transparent',
+                    WebkitUserSelect: 'none',
                     WebkitTouchCallout: 'none',
                     minHeight: '44px',
-                    minWidth: '44px'
+                    minWidth: '60px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   API
-                </button>
-                <button
-                  onClick={() => {
-                    console.log('Clear auth clicked!');
-                    StackAuthNative.forceSignOut();
-                    window.location.reload();
-                  }}
-                  onTouchEnd={(e) => {
+                </div>
+
+                {/* Clear Auth Button */}
+                <div
+                  onTouchStart={(e) => {
                     e.preventDefault();
-                    console.log('Clear auth touched!');
+                    console.log('Clear auth touch start');
                     StackAuthNative.forceSignOut();
                     window.location.reload();
                   }}
-                  className="px-3 py-1 bg-orange-500 text-white rounded text-sm touch-manipulation"
+                  className="px-3 py-2 bg-orange-500 text-white rounded-full cursor-pointer text-sm font-medium"
                   style={{
                     WebkitTapHighlightColor: 'transparent',
+                    WebkitUserSelect: 'none',
                     WebkitTouchCallout: 'none',
                     minHeight: '44px',
-                    minWidth: '44px'
+                    minWidth: '60px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   Clear
-                </button>
-                <button
-                  onClick={async () => {
-                    console.log('Sign out clicked!');
-                    await StackAuthNative.signOut();
-                    if (refreshAuthState) {
-                      await refreshAuthState();
-                    }
-                    navigate('/sign-in');
-                  }}
-                  onTouchEnd={async (e) => {
+                </div>
+
+                {/* Logout Button */}
+                <div
+                  onTouchStart={async (e) => {
                     e.preventDefault();
-                    console.log('Sign out touched!');
+                    console.log('Logout touch start');
                     await StackAuthNative.signOut();
                     if (refreshAuthState) {
                       await refreshAuthState();
                     }
                     navigate('/sign-in');
                   }}
-                  className="px-3 py-1 bg-red-500 text-white rounded text-sm touch-manipulation"
+                  className="px-3 py-2 bg-red-500 text-white rounded-full cursor-pointer text-sm font-medium"
                   style={{
                     WebkitTapHighlightColor: 'transparent',
+                    WebkitUserSelect: 'none',
                     WebkitTouchCallout: 'none',
                     minHeight: '44px',
-                    minWidth: '44px'
+                    minWidth: '60px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   Logout
-                </button>
+                </div>
               </div>
             ) : (
-              <AvatarDropdown user={user}>
-                <AvatarDropdownItem onClick={() => navigate("/settings")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </AvatarDropdownItem>
-                <AvatarDropdownSeparator />
-                <AvatarDropdownItem
-                  onClick={async () => {
-                    try {
-                      const user = stackClientApp.getUser();
-                      if (user) {
-                        await user.signOut();
-                        navigate("/sign-in");
-                      }
-                    } catch (error) {
-                      console.error("Sign out error:", error);
-                    }
-                  }}
-                  className="text-red-600 hover:text-red-600"
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </AvatarDropdownItem>
-              </AvatarDropdown>
+                  {theme === "dark" ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                </Button>
+                <AvatarDropdown user={user}>
+                  <AvatarDropdownItem onClick={() => navigate("/settings")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </AvatarDropdownItem>
+                  <AvatarDropdownSeparator />
+                  <AvatarDropdownItem
+                    onClick={async () => {
+                      try {
+                        const user = stackClientApp.getUser();
+                        if (user) {
+                          await user.signOut();
+                          navigate("/sign-in");
+                        }
+                      } catch (error) {
+                        console.error("Sign out error:", error);
+                      }
+                    }}
+                    className="text-red-600 hover:text-red-600"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </AvatarDropdownItem>
+                </AvatarDropdown>
+              </>
             )}
           </div>
         </div>
