@@ -88,7 +88,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { sessionId, content } = req.body;
+  const { sessionId, content, images } = req.body;
 
   if (!sessionId || !content?.trim()) {
     return res.status(400).json({
@@ -143,30 +143,124 @@ export default async function handler(req, res) {
     let responseMetadata = {};
     
     try {
+      // Check if user uploaded images for analysis
+      if (images && images.length > 0) {
+        console.log(`🖼️  Image analysis request detected with ${images.length} image(s)`);
+        
+        try {
+          // Prepare messages for OpenAI Vision API
+          const visionMessages = [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: content || "Please analyze this image."
+                },
+                ...images.map(image => ({
+                  type: "image_url",
+                  image_url: {
+                    url: `data:${image.mediaType};base64,${image.base64}`
+                  }
+                }))
+              ]
+            }
+          ];
+
+          // Use GPT-4 Vision to analyze the images
+          const visionCompletion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: visionMessages,
+            max_tokens: 1000,
+            temperature: 0.7
+          });
+
+          assistantResponse = visionCompletion.choices[0]?.message?.content || "I was unable to analyze the image.";
+
+          // Add metadata to indicate this was an image analysis
+          responseMetadata = {
+            isImageAnalysis: true,
+            analyzedImages: images.length,
+            imageNames: images.map(img => img.name)
+          };
+          
+        } catch (visionError) {
+          console.error("❌ Image analysis error:", visionError);
+          assistantResponse = `I apologize, but I'm having trouble analyzing the uploaded image(s). Please try again or describe what you'd like me to help you with regarding the image.`;
+          
+          responseMetadata = {
+            isImageAnalysis: true,
+            error: visionError.message
+          };
+        }
+      }
       // Check if this is an image generation request
-      if (detectImageGenerationRequest(content)) {
+      else if (detectImageGenerationRequest(content)) {
         console.log("🎨 Image generation request detected");
         
         // Extract the image details from the prompt
         const imageSubject = extractImageDetails(content);
         
         try {
-          // Generate image using Gemini-enhanced prompts
-          const imageResult = await generateImage(imageSubject);
+          // Call the actual DALL-E image generation API
+          const baseUrl = process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}` 
+            : (req.headers.origin || 'http://localhost:3000');
           
-          // Format the response with the enhanced description
-          assistantResponse = `🎨 **Image Generation Request**\n\n**Your prompt:** "${imageSubject}"\n\n**Enhanced prompt:** "${imageResult.enhancedPrompt}"\n\n**Visualization:**\n${imageResult.description}\n\n---\n*Note: I've created a detailed description using Gemini AI. Actual image generation capabilities are in development.*`;
+          const imageRequest = await fetch(`${baseUrl}/api/generate-image`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': req.headers.authorization,
+            },
+            body: JSON.stringify({
+              prompt: imageSubject,
+              size: "1024x1024",
+              quality: "standard"
+            })
+          });
+
+          const imageResult = await imageRequest.json();
           
-          // Add metadata to indicate this was an image request
-          responseMetadata = {
-            isImageRequest: true,
-            imageData: imageResult,
-          };
+          if (imageResult.success && imageResult.data.imageData) {
+            // Image was generated successfully
+            assistantResponse = `🎨 I've generated an image based on your request: "${imageSubject}"\n\n**Enhanced prompt:** ${imageResult.data.enhancedPrompt}\n\n**Description:** ${imageResult.data.description}`;
+            
+            responseMetadata = {
+              isImageRequest: true,
+              imageData: imageResult.data.imageData,
+              imageDetails: {
+                originalPrompt: imageSubject,
+                enhancedPrompt: imageResult.data.enhancedPrompt,
+                revisedPrompt: imageResult.data.revisedPrompt,
+                description: imageResult.data.description
+              }
+            };
+          } else {
+            // Fallback to description only
+            assistantResponse = `🎨 I created a detailed description for your image request: "${imageSubject}"\n\n**Enhanced prompt:** ${imageResult.data?.enhancedPrompt || imageSubject}\n\n**Description:** ${imageResult.data?.description || 'A detailed artistic description could not be generated at this time.'}`;
+            
+            responseMetadata = {
+              isImageRequest: true,
+              imageData: null,
+              imageDetails: {
+                originalPrompt: imageSubject,
+                enhancedPrompt: imageResult.data?.enhancedPrompt,
+                description: imageResult.data?.description
+              }
+            };
+          }
           
         } catch (imageError) {
           console.error("❌ Image generation error:", imageError);
           // Fallback to text description
-          assistantResponse = `I understand you'd like me to generate an image of "${imageSubject}". While I can't create actual images yet, I can describe what it would look like in vivid detail. Would you like me to provide a detailed description instead?`;
+          assistantResponse = `I understand you'd like me to generate an image of "${imageSubject}". I'm experiencing technical difficulties with image generation right now. Would you like me to provide a detailed description instead?`;
+          
+          responseMetadata = {
+            isImageRequest: true,
+            imageData: null,
+            error: imageError.message
+          };
         }
       } else {
         // Regular text generation using OpenAI
@@ -187,15 +281,22 @@ export default async function handler(req, res) {
         "I apologize, but I'm experiencing technical difficulties. Please try again in a moment.";
     }
 
-    // Store assistant response
+    // Store assistant response with metadata
     const assistantMessageResult = await client.query(
-      `INSERT INTO chat_messages (session_id, role, content) 
-       VALUES ($1, $2, $3) 
-       RETURNING id, role, content, created_at`,
-      [sessionId, "assistant", assistantResponse],
+      `INSERT INTO chat_messages (session_id, role, content, metadata) 
+       VALUES ($1, $2, $3, $4) 
+       RETURNING id, role, content, metadata, created_at`,
+      [sessionId, "assistant", assistantResponse, JSON.stringify(responseMetadata)],
     );
 
     const assistantMessage = assistantMessageResult.rows[0];
+    
+    // Parse metadata back to object for response and extract imageData
+    if (assistantMessage.metadata) {
+      assistantMessage.metadata = JSON.parse(assistantMessage.metadata);
+      // Extract imageData to message level for frontend compatibility
+      assistantMessage.imageData = assistantMessage.metadata.imageData || null;
+    }
 
     // Update session timestamp
     await client.query(

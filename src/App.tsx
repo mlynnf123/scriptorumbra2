@@ -9,6 +9,7 @@ import Homepage from "./pages/Homepage";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
+import AuthSuccess from "./pages/AuthSuccess";
 import { Suspense } from "react";
 import { StackHandler, StackProvider, StackTheme } from '@stackframe/react';
 import { stackClientApp } from './stack';
@@ -41,6 +42,7 @@ const App = () => (
                   <Routes>
                     <Route path="/handler/*" element={<HandlerRoutes />} />
                     <Route path="/sign-in" element={<SignIn />} />
+                    <Route path="/auth-success" element={<AuthSuccess />} />
                     <Route path="/" element={<Homepage />} />
                     <Route path="/chat" element={<Chat />} />
                     <Route path="/chat/:sessionId" element={<Chat />} />

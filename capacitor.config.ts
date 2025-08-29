@@ -6,13 +6,18 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https',
-    // Allow CORS for production API
-    allowNavigation: ['scriptorumbra2.vercel.app']
+    // Allow navigation to external sites (Stack Auth, API, etc.)
+    allowNavigation: [
+      'scriptorumbra2.vercel.app',
+      '*.stack-auth.com',
+      'stack-auth.com'
+    ]
   },
   ios: {
     contentInset: 'automatic',
     scrollEnabled: true,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
+    scheme: 'scriptorumbra'
   },
   plugins: {
     Keyboard: {

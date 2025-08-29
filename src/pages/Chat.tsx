@@ -244,7 +244,10 @@ Based on current web results, provide comprehensive information about this topic
         sessionId = await createNewSession("New Conversation");
       }
 
-      await sendChatMessage(messageContent);
+      await sendChatMessage(messageContent, attachedFiles);
+      
+      // Clear attached files after sending
+      setAttachedFiles([]);
       console.log('Message sent successfully');
     } catch (error) {
       console.error("Error sending message:", error);

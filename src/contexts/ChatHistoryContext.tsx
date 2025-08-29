@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { stackClientApp } from "@/stack";
 import { apiClient } from "@/lib/api";
 import { ChatMessage, ChatSession } from "@/types/chat";
+import { Capacitor } from "@capacitor/core";
+import { StackAuthNative } from "@/utils/stack-auth-native";
 
 
 
@@ -52,8 +54,17 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   useEffect(() => {
     const getUser = async () => {
       try {
-        const currentUser = await stackClientApp.getUser();
-        console.log("ChatHistoryContext - User:", currentUser);
+        let currentUser = null;
+        
+        // Use native auth for Capacitor, regular Stack Auth for web
+        if (Capacitor.isNativePlatform()) {
+          currentUser = await StackAuthNative.getCurrentUser();
+          console.log("ChatHistoryContext - Native User:", currentUser);
+        } else {
+          currentUser = await stackClientApp.getUser();
+          console.log("ChatHistoryContext - Web User:", currentUser);
+        }
+        
         setUser(currentUser);
       } catch (error) {
         console.log("ChatHistoryContext - No authenticated user:", error);
@@ -222,13 +233,16 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   }
 
 
-  const sendMessage = async (content: string, options?: { model?: string }): Promise<void> => {
+  const sendMessage = async (content: string, files?: File[], options?: { model?: string }): Promise<void> => {
     if (!currentSessionId || !isAuthenticated) {
       throw new Error("Authentication required to send messages");
     }
 
     try {
-      const response = await apiClient.sendMessage(currentSessionId, content, options);
+      const response = await apiClient.sendMessage(currentSessionId, content, { 
+        ...options,
+        files 
+      });
 
       // Update the current session with new messages
       setSessions((prev) =>

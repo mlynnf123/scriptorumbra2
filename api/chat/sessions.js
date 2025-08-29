@@ -112,6 +112,7 @@ export default async function handler(req, res) {
                   'id', m.id,
                   'role', m.role,
                   'content', m.content,
+                  'metadata', m.metadata,
                   'created_at', m.created_at
                 ) ORDER BY m.created_at ASC
               ) FILTER (WHERE m.id IS NOT NULL),
@@ -127,7 +128,21 @@ export default async function handler(req, res) {
 
         const sessions = result.rows.map((session) => ({
           ...session,
-          messages: session.messages || [],
+          messages: (session.messages || []).map(message => {
+            // Extract imageData from metadata if it exists
+            let imageData = null;
+            if (message.metadata) {
+              const metadata = typeof message.metadata === 'string' 
+                ? JSON.parse(message.metadata) 
+                : message.metadata;
+              imageData = metadata.imageData || null;
+            }
+            
+            return {
+              ...message,
+              imageData
+            };
+          }),
         }));
 
         res.json({
