@@ -262,7 +262,14 @@ Based on current web results, provide comprehensive information about this topic
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div 
+            className="flex items-center space-x-3"
+            style={{
+              position: 'relative',
+              zIndex: 1000,
+              touchAction: 'manipulation'
+            }}
+          >
             {Capacitor.isNativePlatform() ? (
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -301,14 +308,38 @@ Based on current web results, provide comprehensive information about this topic
             {Capacitor.isNativePlatform() ? (
               <div className="flex gap-2">
                 <button
-                  onClick={() => {
-                    console.log('Test button clicked!');
-                    alert('Test button works!');
+                  onClick={async () => {
+                    console.log('API Test button clicked!');
+                    try {
+                      const response = await fetch('/api/test-simple', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ test: 'API call from iOS' })
+                      });
+                      const data = await response.json();
+                      console.log('API response:', data);
+                      alert(`API works! ${data.message}`);
+                    } catch (error) {
+                      console.error('API error:', error);
+                      alert(`API failed: ${error.message}`);
+                    }
                   }}
-                  onTouchEnd={(e) => {
+                  onTouchEnd={async (e) => {
                     e.preventDefault();
-                    console.log('Test button touched!');
-                    alert('Test button touch works!');
+                    console.log('API Test touched!');
+                    try {
+                      const response = await fetch('https://scriptorumbra2.vercel.app/api/test-simple', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ test: 'API call from iOS touch' })
+                      });
+                      const data = await response.json();
+                      console.log('API response:', data);
+                      alert(`API works! ${data.message}`);
+                    } catch (error) {
+                      console.error('API error:', error);
+                      alert(`API failed: ${error.message}`);
+                    }
                   }}
                   className="px-3 py-1 bg-blue-500 text-white rounded text-sm touch-manipulation"
                   style={{
@@ -318,7 +349,7 @@ Based on current web results, provide comprehensive information about this topic
                     minWidth: '44px'
                   }}
                 >
-                  Test
+                  API
                 </button>
                 <button
                   onClick={() => {
