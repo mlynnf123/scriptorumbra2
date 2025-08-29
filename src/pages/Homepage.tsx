@@ -40,7 +40,17 @@ const Homepage = () => {
     isAuthenticated,
     user,
     authLoading,
+    refreshAuthState,
   } = useChatHistory();
+
+  // Test alert on component mount to verify we're using the latest version
+  React.useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      console.log('🚨 HOMEPAGE MOUNTED - Version 2025-08-29-v3');
+      // Uncomment next line to test if this version is loading:
+      // alert('Homepage loaded - Version v3');
+    }
+  }, []);
 
 
   const handleFileUpload = () => {
@@ -456,6 +466,56 @@ Based on current web results, provide comprehensive information about this topic
           {/* Suggested Prompts */}
           <div className="space-y-4">
             <h2 className="text-base sm:text-lg font-light text-left">Try these prompts</h2>
+            {/* Emergency debug section for iOS */}
+            {Capacitor.isNativePlatform() && (
+              <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <h3 className="text-sm font-medium mb-3 text-yellow-800 dark:text-yellow-200">
+                  🚨 DEBUG MODE (iOS) - Version v3
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      alert('Touch Test SUCCESS! App version v3 is loaded.');
+                    }}
+                    className="px-3 py-2 bg-blue-500 text-white rounded text-sm"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    Touch Test
+                  </button>
+                  <button
+                    onTouchStart={async (e) => {
+                      e.preventDefault();
+                      try {
+                        const response = await fetch('https://scriptorumbra2.vercel.app/api/test-simple');
+                        const data = await response.json();
+                        alert(`API Success: ${data.message}`);
+                      } catch (error) {
+                        alert(`API Failed: ${error.message}`);
+                      }
+                    }}
+                    className="px-3 py-2 bg-green-500 text-white rounded text-sm"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    API Test
+                  </button>
+                  <button
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      if (confirm('Clear all auth data and reload?')) {
+                        StackAuthNative.forceSignOut();
+                        window.location.reload();
+                      }
+                    }}
+                    className="px-3 py-2 bg-red-500 text-white rounded text-sm"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    Clear Auth
+                  </button>
+                </div>
+              </div>
+            )}
+
             <Suggestions className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Suggestion 
                 suggestion="Write a poem in the style of Sylvia Plath"
