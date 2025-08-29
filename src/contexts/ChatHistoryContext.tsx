@@ -15,6 +15,7 @@ interface ChatHistoryContextType {
   authLoading: boolean;
   isAuthenticated: boolean;
   user: any;
+  refreshAuthState: () => Promise<void>;
   createNewSession: (title?: string, skipWelcome?: boolean) => Promise<string>;
   createSessionWithMessage: (message: string, title?: string) => Promise<string>;
   switchToSession: (sessionId: string) => void;
@@ -50,7 +51,28 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   
-  // Try to get the current user
+  // Function to refresh authentication state
+  const refreshAuthState = async () => {
+    try {
+      let currentUser = null;
+      
+      // Use native auth for Capacitor, regular Stack Auth for web
+      if (Capacitor.isNativePlatform()) {
+        currentUser = await StackAuthNative.getCurrentUser();
+        console.log("ChatHistoryContext - Native User (refresh):", currentUser);
+      } else {
+        currentUser = await stackClientApp.getUser();
+        console.log("ChatHistoryContext - Web User (refresh):", currentUser);
+      }
+      
+      setUser(currentUser);
+    } catch (error) {
+      console.log("ChatHistoryContext - No authenticated user (refresh):", error);
+      setUser(null);
+    }
+  };
+  
+  // Try to get the current user on mount
   useEffect(() => {
     const getUser = async () => {
       try {
@@ -351,6 +373,7 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
         authLoading,
         isAuthenticated,
         user,
+        refreshAuthState,
         createNewSession,
         createSessionWithMessage,
         switchToSession,

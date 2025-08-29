@@ -11,9 +11,11 @@ import { Browser } from "@capacitor/browser";
 import { App } from "@capacitor/app";
 import { MobileAuthBridge } from "@/utils/mobile-auth-bridge";
 import { StackAuthNative } from "@/utils/stack-auth-native";
+import { useChatHistory } from "@/contexts/ChatHistoryContext";
 
 export default function SignIn() {
   const navigate = useNavigate();
+  const chatContext = useChatHistory();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -149,6 +151,12 @@ export default function SignIn() {
       }
       
       console.log('✅ Native auth successful:', result.user.email);
+      
+      // Refresh the auth state in the context
+      if (chatContext && chatContext.refreshAuthState) {
+        await chatContext.refreshAuthState();
+      }
+      
       navigate("/");
       
     } catch (error: any) {
