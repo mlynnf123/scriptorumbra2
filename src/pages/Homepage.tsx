@@ -308,16 +308,16 @@ Based on current web results, provide comprehensive information about this topic
                 <div
                   onTouchStart={async (e) => {
                     e.preventDefault();
-                    console.log('API test touch start');
+                    console.log('API test touch start - Build:', new Date().toISOString());
                     try {
                       const response = await fetch('https://scriptorumbra2.vercel.app/api/test-simple', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ test: 'Touch test from iOS' })
+                        body: JSON.stringify({ test: 'Touch test from iOS', build: '2025-08-29-v2' })
                       });
                       const data = await response.json();
                       console.log('API response:', data);
-                      alert(`API Success: ${data.message}`);
+                      alert(`API Success: ${data.message} (Build: 2025-08-29-v2)`);
                     } catch (error) {
                       console.error('API error:', error);
                       alert(`API Failed: ${error.message}`);
