@@ -90,18 +90,21 @@ instance.interceptors.request.use(
 
 export const apiClient = {
   getChatSessions: async (): Promise<ChatSession[]> => {
-    // Temporarily use debug endpoint to bypass auth
+    // Using debug endpoint to bypass auth middleware issues
+    console.log('🐛 API: Calling /chat/sessions-debug for getChatSessions');
     const response = await instance.get('/chat/sessions-debug');
     return response.data.data.sessions;
   },
 
   createChatSession: async (title?: string, userEmail?: string, userName?: string): Promise<ChatSession> => {
-    // Temporarily use debug endpoint to bypass auth
+    // Using debug endpoint to bypass auth middleware issues
+    console.log('🐛 API: Calling /chat/sessions-debug for createChatSession');
     const response = await instance.post('/chat/sessions-debug', { 
       title,
       userEmail,
       userName 
     });
+    console.log('🐛 API: Debug response:', response.data);
     return response.data.data.session;
   },
 
