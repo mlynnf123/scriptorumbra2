@@ -5,6 +5,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Capacitor } from "@capacitor/core";
+import { StackAuthNative } from "@/utils/stack-auth-native";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -139,12 +141,22 @@ const Index = () => {
 
   const handleSignOut = async () => {
     try {
-      const user = await stackClientApp.getUser();
-      if (user) {
-        await user.signOut();
+      if (Capacitor.isNativePlatform()) {
+        await StackAuthNative.signOut();
+        console.log("Native sign out successful");
+        if (refreshAuthState) {
+          await refreshAuthState();
+        }
+        toast.success("Signed out successfully");
+        navigate('/sign-in');
+      } else {
+        const user = await stackClientApp.getUser();
+        if (user) {
+          await user.signOut();
+        }
+        toast.success("Signed out successfully");
+        window.location.href = "/sign-in";
       }
-      toast.success("Signed out successfully");
-      window.location.href = "/sign-in";
     } catch (error) {
       console.error("Sign out error:", error);
       toast.error("Failed to sign out");

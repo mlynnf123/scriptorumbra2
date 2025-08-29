@@ -5,6 +5,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Capacitor } from "@capacitor/core";
+import { StackAuthNative } from "@/utils/stack-auth-native";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -297,15 +299,23 @@ Based on current web results, provide comprehensive information about this topic
 
   const handleSignOut = async () => {
     try {
-      const user = await stackClientApp.getUser();
-      if (user) {
-        await user.signOut();
+      if (Capacitor.isNativePlatform()) {
+        await StackAuthNative.signOut();
+        console.log("Native sign out successful");
+        if (refreshAuthState) {
+          await refreshAuthState();
+        }
+        navigate('/sign-in');
+      } else {
+        const user = await stackClientApp.getUser();
+        if (user) {
+          await user.signOut();
+        }
+        console.log("Web sign out successful");
+        window.location.href = "/sign-in";
       }
-      console.log("Signed out successfully");
-      window.location.href = "/sign-in";
     } catch (error) {
       console.error("Sign out error:", error);
-      console.error("Failed to sign out");
     }
   };
 

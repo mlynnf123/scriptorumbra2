@@ -12,6 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Capacitor } from "@capacitor/core";
+import { StackAuthNative } from "@/utils/stack-auth-native";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -106,11 +108,21 @@ const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
   const handleSignOut = async () => {
     try {
-      await stackClientApp.signOut();
-      console.log("Signed out successfully");
-      window.location.href = '/';
+      if (Capacitor.isNativePlatform()) {
+        await StackAuthNative.signOut();
+        console.log("Native sign out successful");
+        // Refresh auth state to update the context
+        if (refreshAuthState) {
+          await refreshAuthState();
+        }
+        navigate('/sign-in');
+      } else {
+        await stackClientApp.signOut();
+        console.log("Web sign out successful");
+        window.location.href = '/';
+      }
     } catch (error) {
-      console.error("Failed to sign out");
+      console.error("Failed to sign out:", error);
     }
   };
 

@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Feather } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { StackAuthNative } from "@/utils/stack-auth-native";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -299,10 +301,19 @@ Based on current web results, provide comprehensive information about this topic
                 <DropdownMenuItem
                   onClick={async () => {
                     try {
-                      const user = stackClientApp.getUser();
-                      if (user) {
-                        await user.signOut();
-                        navigate("/sign-in");
+                      if (Capacitor.isNativePlatform()) {
+                        await StackAuthNative.signOut();
+                        console.log("Native sign out successful");
+                        if (refreshAuthState) {
+                          await refreshAuthState();
+                        }
+                        navigate('/sign-in');
+                      } else {
+                        const user = stackClientApp.getUser();
+                        if (user) {
+                          await user.signOut();
+                          navigate("/sign-in");
+                        }
                       }
                     } catch (error) {
                       console.error("Sign out error:", error);

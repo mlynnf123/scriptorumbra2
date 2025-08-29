@@ -37,9 +37,25 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     // Fallback to custom JWT verification
+    console.log("🔐 Auth: Attempting custom JWT verification");
     const customDecoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("✅ Auth: Custom JWT verified successfully");
 
-    // Verify user still exists in database
+    // Check if this is a native app JWT (has type field)
+    if (customDecoded.type === 'access' || customDecoded.type === 'refresh') {
+      console.log("📱 Auth: Native app JWT detected");
+      // This is a native app JWT, create user object from token data
+      req.user = {
+        id: customDecoded.userId,
+        email: customDecoded.email,
+        name: customDecoded.email.split('@')[0], // Use email prefix as name
+        avatar_url: null
+      };
+      console.log("✅ Auth: Native user object created for:", req.user.email);
+      return next();
+    }
+
+    // Otherwise, verify user still exists in database (legacy flow)
     const pool = getPool();
     const client = await pool.connect();
     try {
