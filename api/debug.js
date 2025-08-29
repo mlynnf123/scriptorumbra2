@@ -69,19 +69,19 @@ export default async function handler(req, res) {
 
     try {
       // For now, create a simple JWT token using the user's email
-      const jwt = require('jsonwebtoken');
-      const crypto = require('crypto');
+      const jwt = await import('jsonwebtoken');
+      const crypto = await import('crypto');
       
       // Create a simple user object
       const user = {
-        id: crypto.createHash('sha256').update(email).digest('hex').substring(0, 16),
+        id: crypto.default.createHash('sha256').update(email).digest('hex').substring(0, 16),
         email: email,
         displayName: email.split('@')[0],
         profileImageUrl: null
       };
 
       // Create access token (valid for 1 hour)
-      const accessToken = jwt.sign(
+      const accessToken = jwt.default.sign(
         { 
           userId: user.id,
           email: user.email,
@@ -92,7 +92,7 @@ export default async function handler(req, res) {
       );
 
       // Create refresh token (valid for 30 days)
-      const refreshToken = jwt.sign(
+      const refreshToken = jwt.default.sign(
         { 
           userId: user.id,
           email: user.email,
