@@ -22,13 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { AvatarDropdown, AvatarDropdownItem, AvatarDropdownSeparator } from "@/components/ui/avatar-dropdown";
 import { useTheme } from "next-themes";
 import { stackClientApp } from "@/stack";
 import { LogOut, Settings, Sun, Moon, Plus, Mic, Globe, X } from "lucide-react";
@@ -281,51 +275,39 @@ Based on current web results, provide comprehensive information about this topic
               )}
             </Button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.profileImageUrl || ""} alt={user?.displayName || ""} />
-                    <AvatarFallback>
-                      {user?.displayName?.charAt(0)?.toUpperCase() || <User className="h-4 w-4" />}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuItem onClick={() => navigate("/settings")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={async () => {
-                    try {
-                      if (Capacitor.isNativePlatform()) {
-                        await StackAuthNative.signOut();
-                        console.log("Native sign out successful");
-                        if (refreshAuthState) {
-                          await refreshAuthState();
-                        }
-                        navigate('/sign-in');
-                      } else {
-                        const user = stackClientApp.getUser();
-                        if (user) {
-                          await user.signOut();
-                          navigate("/sign-in");
-                        }
+            <AvatarDropdown user={user}>
+              <AvatarDropdownItem onClick={() => navigate("/settings")}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </AvatarDropdownItem>
+              <AvatarDropdownSeparator />
+              <AvatarDropdownItem
+                onClick={async () => {
+                  try {
+                    if (Capacitor.isNativePlatform()) {
+                      await StackAuthNative.signOut();
+                      console.log("Native sign out successful");
+                      if (refreshAuthState) {
+                        await refreshAuthState();
                       }
-                    } catch (error) {
-                      console.error("Sign out error:", error);
+                      navigate('/sign-in');
+                    } else {
+                      const user = stackClientApp.getUser();
+                      if (user) {
+                        await user.signOut();
+                        navigate("/sign-in");
+                      }
                     }
-                  }}
-                  className="text-red-600 focus:text-red-600"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  } catch (error) {
+                    console.error("Sign out error:", error);
+                  }
+                }}
+                className="text-red-600 hover:text-red-600"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </AvatarDropdownItem>
+            </AvatarDropdown>
           </div>
         </div>
       </header>

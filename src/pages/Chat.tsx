@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Capacitor } from "@capacitor/core";
 import { StackAuthNative } from "@/utils/stack-auth-native";
+import { AvatarDropdown, AvatarDropdownItem, AvatarDropdownSeparator } from "@/components/ui/avatar-dropdown";
+import { IOSDropdownMenu, IOSDropdownMenuItem, IOSDropdownMenuSeparator } from "@/components/ui/ios-dropdown-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -462,30 +464,58 @@ Based on current web results, provide comprehensive information about this topic
             >
               <Plus className="w-4 h-4" />
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-slate-600 dark:text-slate-400"
-                >
-                  <Settings className="w-4 h-4" />
-                  <ChevronDown className="w-3 h-3 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => setShowSetup(true)}>
+            {Capacitor.isNativePlatform() ? (
+              <IOSDropdownMenu
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-600 dark:text-slate-400"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <ChevronDown className="w-3 h-3 ml-1" />
+                  </Button>
+                }
+                align="end"
+                className="w-48"
+              >
+                <IOSDropdownMenuItem onClick={() => setShowSetup(true)}>
                   Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                </IOSDropdownMenuItem>
+                <IOSDropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
                   {theme === "dark" ? "Light Mode" : "Dark Mode"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400">
+                </IOSDropdownMenuItem>
+                <IOSDropdownMenuSeparator />
+                <IOSDropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400">
                   Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </IOSDropdownMenuItem>
+              </IOSDropdownMenu>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-600 dark:text-slate-400"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <ChevronDown className="w-3 h-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setShowSetup(true)}>
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400">
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </header>

@@ -1,0 +1,137 @@
+import React, { useState, useRef, useEffect } from "react";
+import { Avatar, AvatarImage, AvatarFallback } from "./avatar";
+import { Button } from "./button";
+import { cn } from "@/lib/utils";
+import { Capacitor } from "@capacitor/core";
+
+interface AvatarDropdownProps {
+  user: any;
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function AvatarDropdown({ user, children, className }: AvatarDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Handle clicks outside the dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      // Use both mouse and touch events for better iOS support
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("touchstart", handleClickOutside);
+      };
+    }
+  }, [isOpen]);
+
+  const handleToggle = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <Button
+        ref={buttonRef}
+        variant="ghost"
+        className={cn(
+          "relative h-10 w-10 rounded-full p-0",
+          // iOS-specific touch optimizations
+          "touch-manipulation cursor-pointer",
+          className
+        )}
+        onClick={handleToggle}
+        onTouchEnd={Capacitor.isNativePlatform() ? handleToggle : undefined}
+        style={{
+          WebkitTapHighlightColor: "transparent",
+          WebkitTouchCallout: "none",
+          WebkitUserSelect: "none",
+          userSelect: "none"
+        }}
+      >
+        <Avatar className="h-8 w-8 pointer-events-none">
+          <AvatarImage 
+            src={user?.profileImageUrl || ""} 
+            alt={user?.displayName || ""} 
+            className="pointer-events-none"
+          />
+          <AvatarFallback className="pointer-events-none">
+            {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || "U"}
+          </AvatarFallback>
+        </Avatar>
+      </Button>
+
+      {isOpen && (
+        <div
+          className={cn(
+            "absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800",
+            "ring-1 ring-black ring-opacity-5 z-50",
+            "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2"
+          )}
+          style={{ minWidth: "14rem" }}
+        >
+          <div 
+            className="py-1" 
+            role="menu" 
+            aria-orientation="vertical"
+            onClick={() => setIsOpen(false)}
+          >
+            {children}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function AvatarDropdownItem({ 
+  children, 
+  onClick, 
+  className,
+  ...props 
+}: React.HTMLAttributes<HTMLDivElement> & { onClick?: () => void }) {
+  return (
+    <div
+      className={cn(
+        "px-4 py-2 text-sm cursor-pointer",
+        "hover:bg-gray-100 dark:hover:bg-gray-700",
+        "flex items-center",
+        "touch-manipulation",
+        className
+      )}
+      role="menuitem"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick?.();
+      }}
+      onTouchEnd={Capacitor.isNativePlatform() ? (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick?.();
+      } : undefined}
+      style={{
+        WebkitTapHighlightColor: "transparent",
+        WebkitTouchCallout: "none"
+      }}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function AvatarDropdownSeparator() {
+  return <div className="h-px my-1 bg-gray-200 dark:bg-gray-700" />;
+}
