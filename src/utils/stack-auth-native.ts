@@ -33,7 +33,7 @@ export class StackAuthNative {
     try {
       console.log('🔐 Native sign-in attempt for:', email);
       
-      const apiUrl = `${this.getApiBaseUrl()}/auth/native-signin`;
+      const apiUrl = `${this.getApiBaseUrl()}/native-signin`;
       console.log('🌐 Making request to:', apiUrl);
       
       const requestBody = {
@@ -103,7 +103,7 @@ export class StackAuthNative {
     try {
       console.log('🔐 Native sign-up attempt for:', email);
       
-      const apiUrl = `${this.getApiBaseUrl()}/auth/native-signin`;
+      const apiUrl = `${this.getApiBaseUrl()}/native-signin`;
       console.log('🌐 Making request to:', apiUrl);
       
       const response = await fetch(apiUrl, {
