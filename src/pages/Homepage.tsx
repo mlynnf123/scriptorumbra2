@@ -263,63 +263,140 @@ Based on current web results, provide comprehensive information about this topic
           </div>
 
           <div className="flex items-center space-x-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              {theme === "dark" ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-            </Button>
+            {Capacitor.isNativePlatform() ? (
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  setTheme(theme === "dark" ? "light" : "dark");
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md touch-manipulation"
+                style={{
+                  WebkitTapHighlightColor: 'transparent',
+                  WebkitTouchCallout: 'none',
+                  minHeight: '44px',
+                  minWidth: '44px'
+                }}
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
+            )}
 
-            <AvatarDropdown user={user}>
-              <AvatarDropdownItem onClick={() => navigate("/settings")}>
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </AvatarDropdownItem>
-              <AvatarDropdownSeparator />
-              {Capacitor.isNativePlatform() && (
-                <AvatarDropdownItem
+            {Capacitor.isNativePlatform() ? (
+              <div className="flex gap-2">
+                <button
                   onClick={() => {
+                    console.log('Test button clicked!');
+                    alert('Test button works!');
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    console.log('Test button touched!');
+                    alert('Test button touch works!');
+                  }}
+                  className="px-3 py-1 bg-blue-500 text-white rounded text-sm touch-manipulation"
+                  style={{
+                    WebkitTapHighlightColor: 'transparent',
+                    WebkitTouchCallout: 'none',
+                    minHeight: '44px',
+                    minWidth: '44px'
+                  }}
+                >
+                  Test
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('Clear auth clicked!');
                     StackAuthNative.forceSignOut();
                     window.location.reload();
                   }}
-                  className="text-orange-600 hover:text-orange-600"
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    console.log('Clear auth touched!');
+                    StackAuthNative.forceSignOut();
+                    window.location.reload();
+                  }}
+                  className="px-3 py-1 bg-orange-500 text-white rounded text-sm touch-manipulation"
+                  style={{
+                    WebkitTapHighlightColor: 'transparent',
+                    WebkitTouchCallout: 'none',
+                    minHeight: '44px',
+                    minWidth: '44px'
+                  }}
                 >
-                  <X className="mr-2 h-4 w-4" />
-                  Force Clear Auth
+                  Clear
+                </button>
+                <button
+                  onClick={async () => {
+                    console.log('Sign out clicked!');
+                    await StackAuthNative.signOut();
+                    if (refreshAuthState) {
+                      await refreshAuthState();
+                    }
+                    navigate('/sign-in');
+                  }}
+                  onTouchEnd={async (e) => {
+                    e.preventDefault();
+                    console.log('Sign out touched!');
+                    await StackAuthNative.signOut();
+                    if (refreshAuthState) {
+                      await refreshAuthState();
+                    }
+                    navigate('/sign-in');
+                  }}
+                  className="px-3 py-1 bg-red-500 text-white rounded text-sm touch-manipulation"
+                  style={{
+                    WebkitTapHighlightColor: 'transparent',
+                    WebkitTouchCallout: 'none',
+                    minHeight: '44px',
+                    minWidth: '44px'
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <AvatarDropdown user={user}>
+                <AvatarDropdownItem onClick={() => navigate("/settings")}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
                 </AvatarDropdownItem>
-              )}
-              <AvatarDropdownItem
-                onClick={async () => {
-                  try {
-                    if (Capacitor.isNativePlatform()) {
-                      await StackAuthNative.signOut();
-                      console.log("Native sign out successful");
-                      if (refreshAuthState) {
-                        await refreshAuthState();
-                      }
-                      navigate('/sign-in');
-                    } else {
+                <AvatarDropdownSeparator />
+                <AvatarDropdownItem
+                  onClick={async () => {
+                    try {
                       const user = stackClientApp.getUser();
                       if (user) {
                         await user.signOut();
                         navigate("/sign-in");
                       }
+                    } catch (error) {
+                      console.error("Sign out error:", error);
                     }
-                  } catch (error) {
-                    console.error("Sign out error:", error);
-                  }
-                }}
-                className="text-red-600 hover:text-red-600"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out
-              </AvatarDropdownItem>
-            </AvatarDropdown>
+                  }}
+                  className="text-red-600 hover:text-red-600"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </AvatarDropdownItem>
+              </AvatarDropdown>
+            )}
           </div>
         </div>
       </header>
