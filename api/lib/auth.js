@@ -44,6 +44,11 @@ export const authenticateToken = async (req, res, next) => {
     // Check if this is a native app JWT (has type field)
     if (customDecoded.type === 'access' || customDecoded.type === 'refresh') {
       console.log("📱 Auth: Native app JWT detected");
+      console.log("📱 Auth: Token data:", {
+        userId: customDecoded.userId,
+        email: customDecoded.email,
+        type: customDecoded.type
+      });
       // This is a native app JWT, create user object from token data
       req.user = {
         id: customDecoded.userId,
@@ -51,7 +56,11 @@ export const authenticateToken = async (req, res, next) => {
         name: customDecoded.email.split('@')[0], // Use email prefix as name
         avatar_url: null
       };
-      console.log("✅ Auth: Native user object created for:", req.user.email);
+      console.log("✅ Auth: Native user object created:", {
+        id: req.user.id,
+        email: req.user.email,
+        name: req.user.name
+      });
       return next();
     }
 

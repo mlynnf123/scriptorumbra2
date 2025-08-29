@@ -165,14 +165,25 @@ export default async function handler(req, res) {
 
         // Simple upsert - each Stack Auth user gets their own database record
         // No need to match by email since Stack Auth handles user identity
-        await client.query(
-          `INSERT INTO users (id, email, name) 
-           VALUES ($1, $2, $3) 
-           ON CONFLICT (id) DO UPDATE SET 
-             name = EXCLUDED.name,
-             updated_at = NOW()`,
-          [req.user.id, userEmail, userName],
-        );
+        console.log("🔐 Sessions: Creating/updating user:", {
+          id: req.user.id,
+          email: userEmail,
+          name: userName
+        });
+        
+        try {
+          await client.query(
+            `INSERT INTO users (id, email, name) 
+             VALUES ($1, $2, $3) 
+             ON CONFLICT (id) DO UPDATE SET 
+               name = EXCLUDED.name,
+               updated_at = NOW()`,
+            [req.user.id, userEmail, userName],
+          );
+        } catch (userError) {
+          console.error("❌ Sessions: Error creating/updating user:", userError);
+          throw userError;
+        }
 
         const result = await client.query(
           `INSERT INTO chat_sessions (user_id, title) 
@@ -222,11 +233,19 @@ export default async function handler(req, res) {
       res.status(405).json({ success: false, message: "Method not allowed" });
     }
   } catch (error) {
-    console.error("Sessions API error:", error);
+    console.error("❌ Sessions API error:", error);
+    console.error("❌ Error details:", {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       message: "Failed to process request",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      error: error.message,
+      detail: error.detail || error.code
     });
   }
 }
