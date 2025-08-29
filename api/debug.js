@@ -38,9 +38,53 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
+    const { email, password, action = 'signin', title } = req.body;
+    
+    // Handle session creation
+    if (action === 'create_session') {
+      console.log('🔧 Debug: Creating session with title:', title);
+      
+      try {
+        // Import database
+        const getPool = (await import('./lib/database.js')).default;
+        const pool = getPool();
+        const client = await pool.connect();
+        
+        try {
+          // Use a test user ID for session creation
+          const testUserId = "test-user-debug-123";
+          const sessionTitle = title || "Debug Session";
+          
+          console.log('🔧 Creating session for user:', testUserId);
+          const result = await client.query(
+            `INSERT INTO chat_sessions (user_id, title) 
+             VALUES ($1, $2) 
+             RETURNING id, title, created_at`,
+            [testUserId, sessionTitle]
+          );
+          
+          const session = result.rows[0];
+          console.log('🔧 Session created:', session);
+          
+          return res.json({
+            success: true,
+            data: { session },
+            debug: "Session created via debug endpoint"
+          });
+        } finally {
+          client.release();
+        }
+      } catch (error) {
+        console.error('🔧 Session creation error:', error);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to create session",
+          error: error.message
+        });
+      }
+    }
+    
     // Native authentication functionality
-    const { email, password, action = 'signin' } = req.body;
-
     console.log('🔐 Native auth request via debug:', { email: email ? 'provided' : 'missing', password: password ? 'provided' : 'missing', action });
 
     if (!email || !password) {

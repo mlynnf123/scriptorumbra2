@@ -199,13 +199,15 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
       
       let response, data;
       try {
-        response = await fetch('https://scriptorumbra2.vercel.app/api/chat/sessions-debug', {
+        response = await fetch('https://scriptorumbra2.vercel.app/api/debug', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json'
-            // Removing auth header for now to test
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({
+            action: 'create_session',
+            title: initialMessage
+          })
         });
         
         console.log('🚨 Direct fetch response status:', response.status);
