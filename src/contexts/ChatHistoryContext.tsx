@@ -236,7 +236,7 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
       // Create a temporary local session until backend is working
       const newSession = {
         id: `temp-${Date.now()}`,
-        title: initialMessage,
+        title: title || message.substring(0, 50) + (message.length > 50 ? '...' : ''),
         created_at: new Date().toISOString()
       };
       console.log('API session created with ID:', newSession.id);
@@ -257,30 +257,28 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
       // Small delay to ensure state is updated
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Now send the message using the specific session ID
-      console.log('Sending message to new session:', newSession.id);
-      const messageResponse = await apiClient.sendMessage(newSession.id, message);
-      console.log('Message sent, got response:', messageResponse);
+      // Create local messages instead of API call
+      console.log('Creating local messages for new session:', newSession.id);
+      
+      const userMessage = {
+        id: `user-${Date.now()}`,
+        role: "user" as const,
+        content: message,
+        created_at: new Date().toISOString(),
+      };
+      
+      const assistantMessage = {
+        id: `assistant-${Date.now() + 1}`,
+        role: "assistant" as const,
+        content: "I'm ready to help! However, I'm currently running in offline mode. To get AI responses, please try again when the backend connection is restored.",
+        created_at: new Date(Date.now() + 1000).toISOString(),
+      };
 
-      // Update the session with the actual messages from the API
+      // Update the session with local messages
       setSessions((prev) =>
         prev.map((session) => {
           if (session.id === newSession.id) {
-            const updatedMessages = [
-              {
-                id: messageResponse.userMessage.id,
-                role: messageResponse.userMessage.role,
-                content: messageResponse.userMessage.content,
-                created_at: messageResponse.userMessage.created_at,
-              },
-              {
-                id: messageResponse.assistantMessage.id,
-                role: messageResponse.assistantMessage.role,
-                content: messageResponse.assistantMessage.content,
-                created_at: messageResponse.assistantMessage.created_at,
-                imageData: messageResponse.assistantMessage.imageData,
-              },
-            ];
+            const updatedMessages = [userMessage, assistantMessage];
 
             return {
               ...session,
