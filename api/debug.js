@@ -84,10 +84,11 @@ export default async function handler(req, res) {
       }
     }
     
-    // Native authentication functionality
-    console.log('🔐 Native auth request via debug:', { email: email ? 'provided' : 'missing', password: password ? 'provided' : 'missing', action });
+    // Native authentication functionality (only if not creating session)
+    if (action !== 'create_session') {
+      console.log('🔐 Native auth request via debug:', { email: email ? 'provided' : 'missing', password: password ? 'provided' : 'missing', action });
 
-    if (!email || !password) {
+      if (!email || !password) {
       return res.status(400).json({
         success: false,
         message: "Email and password are required",
@@ -166,6 +167,7 @@ export default async function handler(req, res) {
         error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
       });
     }
+    } // End of authentication block
   }
 
   return res.status(405).json({ 

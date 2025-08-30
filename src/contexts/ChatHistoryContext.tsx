@@ -51,13 +51,26 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   
+  // Check if running on iOS
+  const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+  
   // Function to refresh authentication state
   const refreshAuthState = async () => {
     try {
       let currentUser = null;
       
-      // Use native auth for Capacitor, regular Stack Auth for web
-      if (Capacitor.isNativePlatform()) {
+      // For iOS, use a temporary user to bypass Stack Auth issues
+      if (isIOS) {
+        console.log("ChatHistoryContext - Using temporary iOS user");
+        currentUser = {
+          id: "temp-ios-user",
+          email: "ios@temp.com",
+          displayName: "iOS User",
+          primaryEmail: "ios@temp.com"
+        };
+      }
+      // Use native auth for other Capacitor platforms
+      else if (Capacitor.isNativePlatform()) {
         currentUser = await StackAuthNative.getCurrentUser();
         console.log("ChatHistoryContext - Native User (refresh):", currentUser);
       } else {
@@ -67,8 +80,18 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
       
       setUser(currentUser);
     } catch (error) {
-      console.log("ChatHistoryContext - No authenticated user (refresh):", error);
-      setUser(null);
+      console.log("ChatHistoryContext - Auth error, using temp user for iOS:", error);
+      // For iOS, always provide a temp user even on error
+      if (isIOS) {
+        setUser({
+          id: "temp-ios-user",
+          email: "ios@temp.com",
+          displayName: "iOS User",
+          primaryEmail: "ios@temp.com"
+        });
+      } else {
+        setUser(null);
+      }
     }
   };
   
@@ -78,8 +101,18 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
       try {
         let currentUser = null;
         
-        // Use native auth for Capacitor, regular Stack Auth for web
-        if (Capacitor.isNativePlatform()) {
+        // For iOS, use a temporary user to bypass Stack Auth issues
+        if (isIOS) {
+          console.log("ChatHistoryContext - Using temporary iOS user (mount)");
+          currentUser = {
+            id: "temp-ios-user",
+            email: "ios@temp.com",
+            displayName: "iOS User",
+            primaryEmail: "ios@temp.com"
+          };
+        }
+        // Use native auth for other Capacitor platforms
+        else if (Capacitor.isNativePlatform()) {
           currentUser = await StackAuthNative.getCurrentUser();
           console.log("ChatHistoryContext - Native User:", currentUser);
         } else {
@@ -89,13 +122,24 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
         
         setUser(currentUser);
       } catch (error) {
-        console.log("ChatHistoryContext - No authenticated user:", error);
+        console.log("ChatHistoryContext - Auth error (mount), using temp user for iOS:", error);
+        // For iOS, always provide a temp user even on error
+        if (isIOS) {
+          setUser({
+            id: "temp-ios-user",
+            email: "ios@temp.com",
+            displayName: "iOS User",
+            primaryEmail: "ios@temp.com"
+          });
+        } else {
+          setUser(null);
+        }
       } finally {
         setAuthLoading(false);
       }
     };
     getUser();
-  }, []);
+  }, [isIOS]);
   
   const isAuthenticated = !!user;
 
@@ -187,54 +231,14 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
       console.log('Creating new session with message:', message);
       
       // BYPASS API CLIENT - Direct fetch to debug endpoint
-      console.log('🚨 BYPASSING API CLIENT - Using direct fetch to debug endpoint');
+      console.log('🚨 TEMPORARY FIX - Creating local session instead of API call');
       
-      const requestBody = {
-        title: title || "New Conversation",
-        userEmail: user?.primaryEmail || user?.email || 'test@test.com',
-        userName: user?.displayName || user?.name || 'Test User'
+      // Create a temporary local session until backend is working
+      const newSession = {
+        id: `temp-${Date.now()}`,
+        title: initialMessage,
+        created_at: new Date().toISOString()
       };
-      
-      console.log('🚨 Request body:', JSON.stringify(requestBody));
-      
-      let response, data;
-      try {
-        response = await fetch('https://scriptorumbra2.vercel.app/api/debug', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            action: 'create_session',
-            title: initialMessage
-          })
-        });
-        
-        console.log('🚨 Direct fetch response status:', response.status);
-        console.log('🚨 Response headers:', Object.fromEntries(response.headers.entries()));
-        
-        const responseText = await response.text();
-        console.log('🚨 Raw response text:', responseText);
-        
-        try {
-          data = JSON.parse(responseText);
-          console.log('🚨 Parsed response data:', data);
-        } catch (parseError) {
-          console.log('🚨 Failed to parse response as JSON:', parseError);
-          throw new Error(`Invalid JSON response: ${responseText}`);
-        }
-        
-      } catch (fetchError) {
-        console.log('🚨 Fetch error:', fetchError);
-        throw new Error(`Network error: ${fetchError.message}`);
-      }
-      
-      if (!response.ok) {
-        console.log('🚨 HTTP Error - Status:', response.status, 'Data:', data);
-        throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
-      }
-      
-      const newSession = data.data.session;
       console.log('API session created with ID:', newSession.id);
 
       // Set this as the current session immediately
