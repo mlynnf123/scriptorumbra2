@@ -230,15 +230,37 @@ export const ChatHistoryProvider: React.FC<ChatHistoryProviderProps> = ({
     try {
       console.log('Creating new session with message:', message);
       
-      // BYPASS API CLIENT - Direct fetch to debug endpoint
-      console.log('🚨 TEMPORARY FIX - Creating local session instead of API call');
+      // Try API first, fallback to local session
+      console.log('🚨 Attempting to create session via API with fallback');
       
-      // Create a temporary local session until backend is working
-      const newSession = {
-        id: `temp-${Date.now()}`,
-        title: title || message.substring(0, 50) + (message.length > 50 ? '...' : ''),
-        created_at: new Date().toISOString()
-      };
+      let newSession;
+      try {
+        // Try to create session via API
+        const response = await fetch('https://scriptorumbra2.vercel.app/api/debug', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'create_session',
+            title: title || message.substring(0, 50) + (message.length > 50 ? '...' : '')
+          })
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.success) {
+          newSession = data.data.session;
+          console.log('✅ Session created via API:', newSession.id);
+        } else {
+          throw new Error(`API Error: ${data.message}`);
+        }
+      } catch (error) {
+        console.log('⚠️ API failed, using local session:', error.message);
+        // Fallback to local session
+        newSession = {
+          id: `temp-${Date.now()}`,
+          title: title || message.substring(0, 50) + (message.length > 50 ? '...' : ''),
+          created_at: new Date().toISOString()
+        };
+      }
       console.log('API session created with ID:', newSession.id);
 
       // Set this as the current session immediately
