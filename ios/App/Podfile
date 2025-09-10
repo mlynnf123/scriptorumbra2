@@ -24,4 +24,40 @@ end
 
 post_install do |installer|
   assertDeploymentTarget(installer)
+  
+  # Fix Capacitor module build issues
+  installer.pods_project.targets.each do |target|
+    if target.name == 'Capacitor'
+      target.build_configurations.each do |config|
+        # Ensure proper module map path
+        config.build_settings['MODULEMAP_FILE'] = '$(SRCROOT)/Target Support Files/Capacitor/Capacitor.modulemap'
+        # Set proper header search paths  
+        config.build_settings['HEADER_SEARCH_PATHS'] ||= []
+        config.build_settings['HEADER_SEARCH_PATHS'] << '$(inherited)'
+        config.build_settings['HEADER_SEARCH_PATHS'] << '$(SRCROOT)/../../node_modules/@capacitor/ios/Capacitor/Capacitor'
+      end
+    end
+  end
+  
+  # Fix CDVViewController.h import issue in CapacitorCordova
+  app_delegate_path = '../../node_modules/@capacitor/ios/CapacitorCordova/CapacitorCordova/Classes/Public/AppDelegate.h'
+  if File.exist?(app_delegate_path)
+    content = File.read(app_delegate_path)
+    fixed_content = content.gsub('#import <CDVViewController.h>', '#import "CDVViewController.h"')
+    File.write(app_delegate_path, fixed_content) if content != fixed_content
+  end
+  
+  # Ensure Capacitor source files are copied to Pods directory
+  capacitor_source = '../../node_modules/@capacitor/ios/Capacitor'
+  capacitor_pods_dir = File.join(installer.sandbox.root, 'Capacitor')
+  if File.exist?(capacitor_source) && !File.exist?(capacitor_pods_dir)
+    FileUtils.cp_r(capacitor_source, capacitor_pods_dir)
+  end
+  
+  # Copy Capacitor.h to Target Support Files
+  capacitor_h_source = '../../node_modules/@capacitor/ios/Capacitor/Capacitor/Capacitor.h'
+  capacitor_h_target = File.join(installer.sandbox.root, 'Target Support Files/Capacitor/Capacitor.h')
+  if File.exist?(capacitor_h_source) && !File.exist?(capacitor_h_target)
+    FileUtils.cp(capacitor_h_source, capacitor_h_target)
+  end
 end
